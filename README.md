@@ -7,57 +7,65 @@
   <a href="https://pypi.org/project/boolfunc/"><img src="https://img.shields.io/pypi/dm/boolfunc.svg?label=PyPI%20downloads" alt="PyPI downloads"></a>
   <a href="https://anaconda.org/conda-forge/boolfunc"><img src="https://img.shields.io/conda/dn/conda-forge/boolfunc.svg?label=Conda%20downloads" alt="Conda downloads"></a>
   <a href="https://stackoverflow.com/questions/tagged/boolfunc"><img src="https://img.shields.io/badge/stackoverflow-ask%20questions-orange.svg" alt="Stack Overflow"></a>
-  <a href="https://www.nature.com/articles/your-nature-paper-doi"><img src="https://img.shields.io/badge/paper-Nature-green.svg" alt="Nature Paper"></a>
-  <a href="https://securityscorecards.dev/viewer/?uri=github.com/username/boolfunc"><img src="https://api.securityscorecards.dev/projects/github.com/username/boolfunc/badge" alt="OpenSSF Scorecard"></a>
-  <a href="https://github.com/username/boolfunc/blob/main/pyproject.toml"><img src="https://img.shields.io/badge/typing-checked-blue.svg" alt="Typing"></a>
+  <a href="https://securityscorecards.dev/viewer/?uri=github.com/username/boolfunc"><img src="https://api.securityscorecards.dev/projects/github.com/GabbyTab/boofunc/badge" alt="OpenSSF Scorecard"></a>
+  <a href="https://github.com/GabbyTab/boofunc/blob/main/pyproject.toml"><img src="https://img.shields.io/badge/typing-checked-blue.svg" alt="Typing"></a>
 </p>
 
-Could you link the picture boo_horizontal.png?
-
-BoolFunc:
-
-Comprehensive Boolean Function Analysis Library
+boolfunc: Comprehensive Boolean Function Analysis Library
 How do I include a build satatus?
 
 
-🚀 Features
-Core Capabilities
-Multiple Representations: Seamless conversion between truth tables, polynomials (ANF), circuits, and spectral forms
 
-Spectral Analysis: Complete Fourier analysis toolkit with influence computation and noise stability
+# 🚀 Features
 
-Property Testing: Classical and quantum property testing algorithms with query complexity analysis
+## Core Capabilities
 
-Quantum Extensions: Quantum Boolean function analysis and quantum property testing
+- **Multiple Representations**  
+  Seamless conversion between truth tables, polynomials (ANF), circuits, and spectral forms.
 
-Advanced Visualization: Interactive plots for spectral properties, influences, and function behavior
+- **Spectral Analysis**  
+  Complete Fourier analysis toolkit with influence computation and noise stability.
 
-High Performance: Optimized implementations using NumPy, SciPy, and optional Numba acceleration
+- **Property Testing**  
+  Classical and quantum property testing algorithms with query complexity analysis.
 
-Built-in Function Library
-Tribes functions
+- **Quantum Extensions**  
+  Quantum Boolean function analysis and quantum property testing.
 
-Majority and threshold functions
+- **Advanced Visualization**  
+  Interactive plots for spectral properties, influences, and function behavior.
 
-Dictator functions
+- **High Performance**  
+  Optimized implementations using NumPy, SciPy, and optional Numba acceleration.
 
-Random Boolean functions
+---
 
-Cryptographic Boolean functions
+## Built-in Function Library
 
-Custom function construction tools
+- Tribes functions
+- Majority and threshold functions
+- Dictator functions
+- Random Boolean functions
+- Cryptographic Boolean functions
+- Custom function construction tools
 
-📦 Installation
-From PyPI (Recommended)
-bash
+
+# 📦 Installation
+
+## Install from PyPI (Recommended)
+
+```bash
 pip install boolfunc
+```
 From Source
-bash
+```bash
 git clone https://github.com/username/boolfunc.git
 cd boolfunc
 pip install -e .
+```
 With Optional Dependencies
-bash
+```bash
+
 # For visualization
 pip install boolfunc[viz]
 
@@ -69,8 +77,9 @@ pip install boolfunc[dev]
 
 # All features
 pip install boolfunc[all]
-🏃‍♀️ Quick Start
-python
+```
+# 🏃‍♀️ Quick Start
+```python
 import boolfunc as bf
 import numpy as np
 
@@ -110,116 +119,94 @@ viz.plot_noise_stability()
 # Quantum extensions (optional)
 qf = bf.quantum.QuantumBooleanFunction(f)
 quantum_fourier = qf.quantum_fourier_analysis()
-📚 Documentation
-Comprehensive documentation is available at boolfunc.readthedocs.io, including:
+```
 
-Getting Started Guide: Basic concepts and first steps
 
-API Reference: Complete function and class documentation
+---
 
-Mathematical Background: Theory and algorithms explained
+# 📚 Documentation
 
-Advanced Examples: Research-oriented tutorials
+Comprehensive documentation is available at [boolfunc.readthedocs.io](https://boolfunc.readthedocs.io), including:
 
-Performance Guide: Optimization tips and benchmarking
+- **Getting Started Guide:** Basic concepts and first steps
+- **API Reference:** Complete function and class documentation
+- **Mathematical Background:** Theory and algorithms explained
+- **Advanced Examples:** Research-oriented tutorials
+- **Performance Guide:** Optimization tips and benchmarking
 
-Quick Links
-Installation Guide
+**Quick Links:**
+- [Installation Guide](https://boolfunc.readthedocs.io/en/latest/installation.html)
+- [Tutorial Notebooks](https://boolfunc.readthedocs.io/en/latest/tutorials.html)
+- [API Reference](https://boolfunc.readthedocs.io/en/latest/api.html)
+- [Mathematical Theory](https://boolfunc.readthedocs.io/en/latest/theory.html)
 
-Tutorial Notebooks
+---
 
-API Reference
+# 🧪 Core Modules
 
-Mathematical Theory
+## `boolfunc.core`
+- Multiple Boolean function representations with automatic conversion:
+  - Truth table representation
+  - Polynomial (ANF) representation
+  - Circuit representation
+  - Spectral representation
 
-🧪 Core Modules
-boolfunc.core
-Multiple Boolean function representations with automatic conversion:
+## `boolfunc.analysis`
+- Comprehensive spectral analysis tools:
+  - Fourier expansion and Walsh-Hadamard transforms
+  - Variable influences and sensitivity analysis
+  - Noise stability and hypercontractivity
+  - Boolean convolution operations
+  - Spectral concentration measures
 
-Truth table representation
+## `boolfunc.testing`
+- Property testing algorithms:
+  - BLR linearity testing
+  - Constant function testing
+  - Junta testing
+  - Monotonicity testing
+  - Custom testing framework
 
-Polynomial (ANF) representation
+## `boolfunc.quantum`
+- Quantum computing extensions:
+  - Quantum Boolean function analysis
+  - Quantum property testing
+  - Quantum Fourier analysis
+  - Quantum circuit synthesis
 
-Circuit representation
+## `boolfunc.visualization`
+- Advanced plotting capabilities:
+  - Influence distribution plots
+  - Fourier spectrum visualization
+  - Noise stability curves
+  - Interactive spectral exploration
 
-Spectral representation
+---
 
-boolfunc.analysis
-Comprehensive spectral analysis tools:
+# 🔬 Research Applications
 
-Fourier expansion and Walsh-Hadamard transforms
-
-Variable influences and sensitivity analysis
-
-Noise stability and hypercontractivity
-
-Boolean convolution operations
-
-Spectral concentration measures
-
-boolfunc.testing
-Property testing algorithms:
-
-BLR linearity testing
-
-Constant function testing
-
-Junta testing
-
-Monotonicity testing
-
-Custom testing framework
-
-boolfunc.quantum
-Quantum computing extensions:
-
-Quantum Boolean function analysis
-
-Quantum property testing
-
-Quantum Fourier analysis
-
-Quantum circuit synthesis
-
-boolfunc.visualization
-Advanced plotting capabilities:
-
-Influence distribution plots
-
-Fourier spectrum visualization
-
-Noise stability curves
-
-Interactive spectral exploration
-
-🔬 Research Applications
 BoolFunc is designed for researchers in:
 
-Theoretical Computer Science: Analysis of computational complexity
+- **Theoretical Computer Science:** Analysis of computational complexity
+- **Cryptography:** Boolean function cryptanalysis and design
+- **Property Testing:** Development of efficient testing algorithms
+- **Quantum Computing:** Quantum algorithm analysis and design
+- **Machine Learning:** Boolean function learning and optimization
+- **Combinatorics:** Extremal problems and probabilistic methods
 
-Cryptography: Boolean function cryptanalysis and design
+---
 
-Property Testing: Development of efficient testing algorithms
+# 📈 Performance
 
-Quantum Computing: Quantum algorithm analysis and design
-
-Machine Learning: Boolean function learning and optimization
-
-Combinatorics: Extremal problems and probabilistic methods
-
-📈 Performance
 BoolFunc is optimized for both small research examples and large-scale computations:
 
-Vectorized Operations: Efficient NumPy-based implementations
+- **Vectorized Operations:** Efficient NumPy-based implementations
+- **JIT Compilation:** Optional Numba acceleration for critical paths
+- **Memory Efficiency:** Sparse representations for large functions
+- **Parallel Processing:** Multi-core support for independent computations
 
-JIT Compilation: Optional Numba acceleration for critical paths
-
-Memory Efficiency: Sparse representations for large functions
-
-Parallel Processing: Multi-core support for independent computations
-
-Benchmarks
-python
+**Benchmarks:**
+```python
 # Performance example: 10-variable Boolean function analysis
 import boolfunc as bf
 import time
@@ -235,11 +222,16 @@ fourier_coeffs = analyzer.fourier_expansion()
 end = time.time()
 
 print(f"Analysis completed in {end - start:.3f} seconds")
-🤝 Contributing
-We welcome contributions from the research community! Please see our Contributing Guide for details.
+```
 
-Development Setup
-bash
+# 🤝 Contributing
+
+We welcome contributions from the research community!  
+Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+## Development Setup
+
+```bash
 # Clone repository
 git clone https://github.com/username/boolfunc.git
 cd boolfunc
@@ -258,46 +250,51 @@ pytest
 flake8 src/
 black src/
 mypy src/
-How to Contribute
-Bug Reports: Use GitHub issues with detailed reproduction steps
+```
 
-Feature Requests: Discuss proposals in GitHub discussions
+## How to Contribute
 
-Code Contributions: Submit pull requests with tests and documentation
+- **Bug Reports:** Use GitHub issues with detailed reproduction steps
+- **Feature Requests:** Discuss proposals in GitHub discussions
+- **Code Contributions:** Submit pull requests with tests and documentation
+- **Documentation:** Help improve docs and add examples
+- **Research Integration:** Share your research applications and use cases
 
-Documentation: Help improve docs and add examples
+---
 
-Research Integration: Share your research applications and use cases
+# 📄 License
 
-📄 License
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License – see the [LICENSE](LICENSE) file for details.
 
-📞 Support and Community
-Documentation: boolfunc.readthedocs.io
+---
 
-Issues: GitHub Issues
+# 📞 Support and Community
 
-Discussions: GitHub Discussions
+- **Documentation:** [boolfunc.readthedocs.io](https://boolfunc.readthedocs.io)
+- **Issues:** [GitHub Issues](https://github.com/username/boolfunc/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/username/boolfunc/discussions)
+- **Email:** boolfunc-support@example.com
 
-Email: boolfunc-support@example.com
+---
 
-🙏 Acknowledgments
-BoolFunc builds upon decades of research in Boolean function analysis. We acknowledge the foundational work of researchers in:
+# 🙏 Acknowledgments
 
-Harmonic analysis on Boolean cubes
+BoolFunc builds upon decades of research in Boolean function analysis.  
+We acknowledge the foundational work of researchers in:
 
-Property testing theory
+- Harmonic analysis on Boolean cubes
+- Property testing theory
+- Quantum computing and quantum query complexity
+- Computational complexity theory
+- Modern cryptanalysis techniques
 
-Quantum computing and quantum query complexity
+---
 
-Computational complexity theory
+# 📖 Citation
 
-Modern cryptanalysis techniques
-
-📖 Citation
 If you use BoolFunc in your research, please cite:
 
-text
+```text
 @software{boolfunc2024,
   title={BoolFunc: A Comprehensive Python Library for Boolean Function Analysis},
   author={Your Name and Contributors},
@@ -305,33 +302,28 @@ text
   url={https://github.com/username/boolfunc},
   version={1.0.0}
 }
-🗺️ Roadmap
-Version 1.0 (Current)
-✅ Core representations and conversions
+```
 
-✅ Spectral analysis toolkit
+---
 
-✅ Basic property testing
+# 🗺️ Roadmap
 
-✅ Visualization framework
+## Version 1.0 (Current)
+- ✅ Core representations and conversions
+- ✅ Spectral analysis toolkit
+- ✅ Basic property testing
+- ✅ Visualization framework
 
-Version 1.1 (Planned)
-🔄 Quantum computing extensions
+## Version 1.1 (Planned)
+- 🔄 Quantum computing extensions
+- 🔄 Advanced cryptographic functions
+- 🔄 Performance optimizations
+- 🔄 Interactive Jupyter widgets
 
-🔄 Advanced cryptographic functions
-
-🔄 Performance optimizations
-
-🔄 Interactive Jupyter widgets
-
-Version 1.2 (Future)
-📋 Distributed computing support
-
-📋 GPU acceleration
-
-📋 Advanced machine learning integration
-
-📋 Formal verification tools
+## Version 1.2 (Future)
+- 📋 Distributed computing support
+- 📋 GPU acceleration
+- 📋 Advanced machine learning integration
 
 Happy Boolean function analyzing! 🎯
 
