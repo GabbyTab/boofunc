@@ -9,13 +9,72 @@ description = "Boolean Function Analysis Library"
 authors = [{name = "Gabriel", email = "gabtab@berkeley.com"}]
 readme = "README.md"
 license = {text = "MIT"}
+requires-python = ">=3.8"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Operating System :: OS Independent",
 ]
 dependencies = [
     "numpy",
     "scipy",
+    "numba",
+    "uncertainties",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "matplotlib",
+    "plotly",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/boolfunc"
+Repository = "https://github.com/yourusername/boolfunc"
+Issues = "https://github.com/yourusername/boolfunc/issues"
+Documentation = "https://boolfunc.readthedocs.io"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+boolfunc = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["test/unit"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+markers = [
+    "slow: marks tests as slow",
+    "integration: marks tests as integration tests",
+]
+
+[tool.black]
+line-length = 88
+target-version = ["py38"]
+include = '\.pyi?$'
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+
+[project.scripts]
+boolfunc-cli = "boolfunc.cli:main"
+
+
+

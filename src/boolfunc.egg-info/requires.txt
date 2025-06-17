@@ -1,0 +1,9 @@
+numpy
+scipy
+numba
+uncertainties
+
+[dev]
+pytest
+matplotlib
+plotly

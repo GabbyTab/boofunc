@@ -1,0 +1,2 @@
+[console_scripts]
+boolfunc-cli = boolfunc.cli:main
