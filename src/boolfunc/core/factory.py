@@ -1,0 +1,123 @@
+import numpy as np
+from collections.abc import Iterable
+from .spaces import Space
+
+class BooleanFunctionFactory:
+    """Factory for creating BooleanFunction instances from various representations"""
+    
+    @classmethod
+    def create(cls, boolean_function_cls, data=None, **kwargs):
+        """
+        Main factory method that dispatches to specialized creators
+        based on input data type
+        """
+        if data is None:
+            return boolean_function_cls(**kwargs)
+
+        # Dispatch based on data type
+        if callable(data):
+            return cls.from_function(boolean_function_cls, data, **kwargs)
+        if hasattr(data, 'rvs'):
+            return cls.from_scipy_distribution(boolean_function_cls, data, **kwargs)
+        if isinstance(data, np.ndarray):
+            return cls._handle_ndarray(boolean_function_cls, data, **kwargs)
+        if isinstance(data, dict):
+            return cls.from_polynomial(boolean_function_cls, data, **kwargs)
+        if isinstance(data, str):
+            return cls.from_symbolic(boolean_function_cls, data, **kwargs)
+        if isinstance(data, set):
+            return cls.from_input_invariant_truth_table(boolean_function_cls, data, **kwargs)
+        if isinstance(data, Iterable):
+            return cls.from_iterable(boolean_function_cls, data, **kwargs)
+        
+        raise TypeError(f"Cannot create BooleanFunction from {type(data)}")
+    
+    @classmethod
+    def _handle_ndarray(cls, boolean_function_cls, data, **kwargs):
+        """Handle NumPy arrays based on dtype"""
+        if data.dtype == bool or np.issubdtype(data.dtype, np.bool_):
+            return cls.from_truth_table(boolean_function_cls, data, **kwargs)
+        if np.issubdtype(data.dtype, np.integer):
+            return cls.from_polynomial(boolean_function_cls, data, **kwargs)
+        if np.issubdtype(data.dtype, np.floating):
+            return cls.from_multilinear(boolean_function_cls, data, **kwargs)
+        return cls.from_polynomial(boolean_function_cls, data, **kwargs)
+
+    @classmethod
+    def from_truth_table(cls, boolean_function_cls, truth_table, rep_type='truth_table', **kwargs):
+        """Create from truth table data"""
+        instance = boolean_function_cls(**kwargs)
+        instance._add_representation(rep_type, truth_table)
+        return instance
+
+    @classmethod
+    def from_function(cls, boolean_function_cls, func, rep_type='function', domain_size=None, **kwargs):
+        """Create from callable function"""
+        instance = boolean_function_cls(**kwargs)
+        instance._add_representation(rep_type, func)
+        if domain_size:
+            instance.n_vars = int(np.log2(domain_size))
+        return instance
+
+    @classmethod
+    def from_scipy_distribution(cls, boolean_function_cls, distribution, rep_type='distribution', **kwargs):
+        """Create from scipy.stats distribution"""
+        instance = boolean_function_cls(**kwargs)
+        instance._add_representation(rep_type, distribution)
+        instance._setup_probabilistic_interface()
+        return instance
+
+    @classmethod
+    def from_polynomial(cls, boolean_function_cls, coeffs, rep_type='polynomial', **kwargs):
+        """Create from polynomial coefficients"""
+        instance = boolean_function_cls(**kwargs)
+        instance._add_representation(rep_type, coeffs)
+        return instance
+
+    @classmethod
+    def from_multilinear(cls, boolean_function_cls, coeffs, rep_type='multilinear', **kwargs):
+        """Create from multilinear polynomial coefficients"""
+        instance = boolean_function_cls(**kwargs)
+        instance._add_representation(rep_type, coeffs)
+        return instance
+
+    @classmethod
+    def from_iterable(cls, boolean_function_cls, data, rep_type='iterable_rep', **kwargs):
+        """Create from streaming truth table"""
+        instance = boolean_function_cls(**kwargs)
+        instance._add_representation(rep_type, list(data))
+        return instance
+
+    @classmethod
+    def from_symbolic(cls, boolean_function_cls, expression, rep_type='symbolic', **kwargs):
+        """Create from symbolic expression string"""
+        instance = boolean_function_cls(**kwargs)
+        variables = kwargs.get('variables', [f'x{i}' for i in range(instance.n_vars)])
+        instance._add_representation(rep_type, (expression, variables))
+        return instance
+
+    @classmethod
+    def from_input_invariant_truth_table(cls, boolean_function_cls, true_inputs, rep_type='truth_table', **kwargs):
+        """Create from set of true input vectors"""
+        n_vars = len(next(iter(true_inputs))) if true_inputs else kwargs.get('n_vars', 0)
+        size = 1 << n_vars
+        truth_table = np.zeros(size, dtype=bool)
+        
+        for i in range(size):
+            vec = tuple(int(b) for b in np.binary_repr(i, width=n_vars))
+            truth_table[i] = vec in true_inputs
+        
+        instance = boolean_function_cls(**kwargs)
+        instance._add_representation(rep_type, truth_table)
+        return instance
+
+    @classmethod
+    def composite_boolean_function(cls, boolean_function_cls, operator, left_func, right_func, rep_type='symbolic', **kwargs):
+        """Create composite function from two BooleanFunctions"""
+        left_sym = left_func.get_representation('symbolic')
+        right_sym = right_func.get_representation('symbolic')
+        expression = f"({left_sym} {operator.__name__} {right_sym})"
+        
+        instance = boolean_function_cls(**kwargs)
+        instance._add_representation(rep_type, expression)
+        return instance

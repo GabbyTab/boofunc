@@ -8,7 +8,6 @@ from .representations import (
 )
 from .adapters import LegacyAdapter
 from .errormodels import ErrorModel, PACErrorModel, ExactErrorModel
-from ..spaces import BooleanCube
 
 __all__ = [
     "BooleanFunction",

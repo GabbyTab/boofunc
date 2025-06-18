@@ -5,6 +5,11 @@ from typing import Protocol, Dict, Any, Optional
 import numpy as np
 from ..spaces import BooleanCube
 from .errormodels import ExactErrorModel
+from collections.abc import Iterable
+from .factory import composite_boolean_function
+from .spaces import Space
+from .representations.registry import get_strategy
+
 #The BooleanFunctionRepresentations and Spaces and ErrorModels are in separate files in the same directory, should I import them? 
 
 try:
@@ -21,7 +26,8 @@ class Representable(Protocol):
     def to_representation(self, rep_type: str): ...
 
 class BooleanFunction(Evaluable, Representable):
-    def __init__(self, space: str = 'boolean_cube', error_model: Optional[Any] = None, **kwargs):
+
+    def __init__(self, space: str = 'plus_minus_cube', error_model: Optional[Any] = None, storage_manager = None, **kwargs):
         self.space = self._create_space(space)
         self.representations: Dict[str, Any] = {}
         self.properties = PropertyStore()
@@ -31,30 +37,33 @@ class BooleanFunction(Evaluable, Representable):
         self.n_vars = kwargs.get('n')
         self._metadata = kwargs.get('metadata', {})
 
+    def __array__(self, dtype=None) -> np.ndarray:
+        """Return the truth table as a NumPy array for NumPy compatibility."""
+        truth_table = self._get_representation('truth_table')
+        return np.asarray(truth_table, dtype=dtype)
+
     def __add__(self, other):
         return composite_boolean_function(operator.add, self, other)
 
     def __mul__(self, other):
         if isinstance(other, (int, float)):
             return ScalarMultiple(other, self)
-        return CompositeBooleanFunction(operator.mul, self, other)
+        return composite_boolean_function(operator.mul, self, other)
 
     def __and__(self, other):
-        return CompositeBooleanFunction(operator.and_, self, other)
+        return composite_boolean_function(operator.and_, self, other)
 
     def __or__(self, other):
-        return CompositeBooleanFunction(operator.or_, self, other)
+        return composite_boolean_function(operator.or_, self, other)
 
     def __xor__(self, other):
-        return CompositeBooleanFunction(operator.xor, self, other)
+        return composite_boolean_function(operator.xor, self, other)
 
     def __invert__(self):
-        return CompositeBooleanFunction(operator.invert, self, None) # how is called imp
+        return composite_boolean_function(operator.invert, self, None) # how is called imp
 
     def __pow__(self, exponent):
-        if not isinstance(exponent, int) or exponent < 0:
-            raise ValueError("Exponent must be a non-negative integer")
-        return Compose([self] * exponent)
+        return composite_boolean_function(operator.pow, self, None) 
 
     def __call__(self, inputs):
         return self.evaluate(inputs)
@@ -64,60 +73,6 @@ class BooleanFunction(Evaluable, Representable):
 
     def __repr__(self):
         return f"BooleanFunction(space={self.space}, n_vars={self.n_vars})"
-
-    @classmethod
-    def create(cls, data=None, **kwargs):
-        if data is None:
-            return cls(**kwargs)
-        if hasattr(data, '__call__'):
-            return cls.from_function(data, **kwargs)
-        elif hasattr(data, 'rvs'):
-            return cls.from_scipy_distribution(data, **kwargs)
-        elif isinstance(data, dict):
-            return cls.from_polynomial(data, **kwargs)
-        elif hasattr(data, '__iter__'):
-            return cls.from_truth_table(data, **kwargs)
-        else:
-            raise TypeError(f"Cannot create BooleanFunction from {type(data)}")
-
-
-    @classmethod
-    def composite_boolean_function(cls, operator, boolean_func, other, **kwargs):
-        """Create from truth table data"""
-        _symbolic = f"({left.get_representation("symbolic")} {op.__name__} {right.get_representation("symbolic")})"
-        instance = cls(**kwargs)
-        instance._add_representation('symbolic', _symbolic)
-        return instance
-
-    @classmethod
-    def from_truth_table(cls, truth_table, **kwargs):
-        """Create from truth table data"""
-        instance = cls(**kwargs)
-        instance._add_representation('truth_table', truth_table)
-        return instance
-    
-    @classmethod
-    def from_function(cls, func, domain_size=None, **kwargs):
-        """Create from callable function"""
-        instance = cls(**kwargs)
-        instance._add_representation('function', func)
-        if domain_size:
-            instance.n_vars = int(np.log2(domain_size))
-        return instance
-    
-    @classmethod
-    def from_scipy_distribution(cls, distribution, **kwargs):
-        """Create from scipy.stats distribution"""
-        instance = cls(**kwargs)
-        instance._add_representation('distribution', distribution)
-        instance._setup_probabilistic_interface()
-        return instance
-    
-    def _add_representation(self, rep_type, data):
-        """Add a representation with validation"""
-        self.representations[rep_type] = data
-        if rep_type == 'truth_table' and self.n_vars is None:
-            self.n_vars = int(np.log2(len(data)))
     
     def _setup_probabilistic_interface(self):
         """Configure as scipy.stats-like random variable"""
@@ -126,28 +81,75 @@ class BooleanFunction(Evaluable, Representable):
 
     def _create_space(self, space_type: str):
         if space_type == 'boolean_cube':
-            return None #BooleanCube()
-        # Add other space types here
-        raise ValueError(f"Unknown space type: {space_type}")
-
+            return Space.BOOLEAN_CUBE
+        elif space_type == 'plus_minus_cube':
+            return Space.PLUS_MINUS_CUBE
+        elif space_type == 'real':
+            return Space.REAL
+        elif space_type == 'log':
+            return Space.LOG
+        elif space_type == 'gaussian':
+            return Space.GAUSSIAN
+        else:
+            raise ValueError(f"Unknown space type: {space_type}")
+    
+    def _compute_representation(self, rep_type: str):
+        # Implement conversion logic here
+        pass
+      
     def get_representation(self, rep_type: str):
         """Retrieve or compute representation"""
         if self.representations[rep_type] is None:
             self.representations[rep_type] = self._compute_representation(rep_type)
         return self.representations[rep_type]
 
-    def _compute_representation(self, rep_type: str):
-        # Implement conversion logic here
+    def add_representation(self, rep_type: str = None):
         pass
 
-    def evaluate(self, inputs, **kwargs):
-        """Evaluate function with automatic input type detection"""
+
+    def evaluate(self, inputs, representation=None, **kwargs):
+        """
+        Evaluate function with automatic input type detection and representation selection.
+        
+        Args:
+            inputs: Input data (array, list, or scipy random variable)
+            representation: Optional specific representation to use
+            **kwargs: Additional evaluation parameters
+        
+        Returns:
+            Boolean result(s) or distribution
+        """
         if hasattr(inputs, 'rvs'):  # scipy.stats random variable
-            return self._evaluate_stochastic(inputs, **kwargs)
+            return self._evaluate_stochastic(inputs, representation=representation, **kwargs)
         elif isinstance(inputs, (list, np.ndarray)):
-            return self._evaluate_deterministic(inputs)
+            return self._evaluate_deterministic(inputs, representation=representation)
         else:
             raise TypeError(f"Unsupported input type: {type(inputs)}")
+
+
+    def _select_representation(self):
+        """
+        Return the first available representation key.
+        Uses dict order as fallback.
+        """
+        if not self.representations:
+            raise RuntimeError("No representations available")  
+        return next(iter(self.representations))  # First key in insertion order
+
+    def _get_strategy(self, rep_key: str):
+        """Return the strategy instance for the given representation key."""
+        return get_strategy(rep_key)
+
+    def _evaluate_deterministic(self, inputs, representation=None):
+        """
+        Evaluate using the specified or first available representation.
+        """
+        inputs = np.asarray(inputs)
+        rep = representation or self._select_representation()
+        data = self.representations[rep]
+        strategy = self._get_strategy(rep)
+        return strategy.evaluate(inputs, data)
+
 
     def _evaluate_stochastic(self, rv_inputs, n_samples=1000):
         """Handle random variable inputs using Monte Carlo"""
@@ -174,7 +176,6 @@ class BooleanFunction(Evaluable, Representable):
     def cdf(self, x):
         """Cumulative distribution function"""
         return self._compute_cdf(x)
-
 
 
 class Property:
