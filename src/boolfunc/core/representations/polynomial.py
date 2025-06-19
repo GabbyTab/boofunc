@@ -1,6 +1,5 @@
 import numpy as np
 from typing import Any, Dict, Union
-from .truth_table import TruthTableRepresentation
 from .registry import register_strategy
 from .base import BooleanFunctionRepresentation
 
@@ -19,18 +18,7 @@ class PolynomialRepresentation(BooleanFunctionRepresentation[np.ndarray]):
         Returns:
             Boolean result or array of results
         """
-        def eval_one(x):
-            # Select coefficients for monomials where all variables in subset are 1
-            mask = (data.reshape(-1, 1) * np.prod(
-                x[np.where(((np.arange(data.size)[:, None] >> 
-                              np.arange(x.size)) & 1)], axis=0), axis=1
-            )).astype(int) % 2
-            return bool(mask.sum() % 2)
-
-        if inputs.ndim == 1:
-            return eval_one(inputs)
-        else:
-            return np.array([eval_one(row) for row in inputs])
+        pass
 
     def dump(self, data: np.ndarray, **kwargs) -> Dict[str, Any]:
         """
@@ -43,41 +31,22 @@ class PolynomialRepresentation(BooleanFunctionRepresentation[np.ndarray]):
         return {"n_vars": n_vars, "coefficients": data.astype(int).tolist()}
 
     def convert_from(self,
-                     source_repr: BooleanFunctionRepresentation,
+                     source_repr: str,
                      source_data: Any,
                      **kwargs) -> np.ndarray:
         """
         Convert from a truth table to ANF via Möbius inversion.
         """
-        if isinstance(source_repr, TruthTableRepresentation):
-            tt = source_data.astype(int)
-            coeffs = tt.copy()
-            n = int(np.log2(coeffs.size))
-            # Möbius (subset) transform
-            for i in range(n):
-                step = 1 << i
-                for j in range(coeffs.size):
-                    if j & step:
-                        coeffs[j] ^= coeffs[j ^ step]
-            return coeffs
-        raise NotImplementedError(f"Conversion from {type(source_repr)} not supported")
+        pass
 
     def convert_to(self,
-                   target_repr: BooleanFunctionRepresentation,
+                   target_repr: str,
                    data: np.ndarray,
                    **kwargs) -> Any:
         """
         Convert ANF coefficients to another representation.
         """
-        if isinstance(target_repr, TruthTableRepresentation):
-            # Evaluate polynomial on all inputs to build truth table
-            n = int(np.log2(data.size))
-            tt = np.zeros(data.size, dtype=bool)
-            for idx in range(tt.size):
-                inp = np.array(list(map(int, np.binary_repr(idx, n))))
-                tt[idx] = self.evaluate(inp, data)
-            return tt
-        return target_repr.convert_from(self, data, **kwargs)
+        pass
 
     def create_empty(self, n_vars: int, **kwargs) -> np.ndarray:
         """

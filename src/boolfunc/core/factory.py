@@ -12,7 +12,7 @@ class BooleanFunctionFactory:
         based on input data type
         """
         if data is None:
-            return boolean_function_cls(**kwargs)
+            return cls(**kwargs)
 
         # Dispatch based on data type
         if callable(data):
@@ -21,9 +21,11 @@ class BooleanFunctionFactory:
             return cls.from_scipy_distribution(boolean_function_cls, data, **kwargs)
         if isinstance(data, np.ndarray):
             return cls._handle_ndarray(boolean_function_cls, data, **kwargs)
+        if isinstance(data, list):
+            return cls._handle_ndarray(boolean_function_cls, np.array(data), **kwargs)
         if isinstance(data, dict):
             return cls.from_polynomial(boolean_function_cls, data, **kwargs)
-        if isinstance(data, str):
+        if isinstance(data, str): 
             return cls.from_symbolic(boolean_function_cls, data, **kwargs)
         if isinstance(data, set):
             return cls.from_input_invariant_truth_table(boolean_function_cls, data, **kwargs)
@@ -46,15 +48,21 @@ class BooleanFunctionFactory:
     @classmethod
     def from_truth_table(cls, boolean_function_cls, truth_table, rep_type='truth_table', **kwargs):
         """Create from truth table data"""
+
+        n_vars = kwargs.get('n')
+        if n_vars is None:
+            n_vars = int(np.log2(len(truth_table)))
+            kwargs['n'] = n_vars
+            
         instance = boolean_function_cls(**kwargs)
-        instance._add_representation(rep_type, truth_table)
+        instance.add_representation(rep_type, truth_table)
         return instance
 
     @classmethod
     def from_function(cls, boolean_function_cls, func, rep_type='function', domain_size=None, **kwargs):
         """Create from callable function"""
         instance = boolean_function_cls(**kwargs)
-        instance._add_representation(rep_type, func)
+        instance.add_representation(rep_type, func)
         if domain_size:
             instance.n_vars = int(np.log2(domain_size))
         return instance
@@ -63,7 +71,7 @@ class BooleanFunctionFactory:
     def from_scipy_distribution(cls, boolean_function_cls, distribution, rep_type='distribution', **kwargs):
         """Create from scipy.stats distribution"""
         instance = boolean_function_cls(**kwargs)
-        instance._add_representation(rep_type, distribution)
+        instance.add_representation(rep_type, distribution)
         instance._setup_probabilistic_interface()
         return instance
 
@@ -71,21 +79,21 @@ class BooleanFunctionFactory:
     def from_polynomial(cls, boolean_function_cls, coeffs, rep_type='polynomial', **kwargs):
         """Create from polynomial coefficients"""
         instance = boolean_function_cls(**kwargs)
-        instance._add_representation(rep_type, coeffs)
+        instance.add_representation(rep_type, coeffs)
         return instance
 
     @classmethod
     def from_multilinear(cls, boolean_function_cls, coeffs, rep_type='multilinear', **kwargs):
         """Create from multilinear polynomial coefficients"""
         instance = boolean_function_cls(**kwargs)
-        instance._add_representation(rep_type, coeffs)
+        instance.add_representation(rep_type, coeffs)
         return instance
 
     @classmethod
     def from_iterable(cls, boolean_function_cls, data, rep_type='iterable_rep', **kwargs):
         """Create from streaming truth table"""
         instance = boolean_function_cls(**kwargs)
-        instance._add_representation(rep_type, list(data))
+        instance.add_representation(rep_type, list(data))
         return instance
 
     @classmethod
@@ -93,7 +101,7 @@ class BooleanFunctionFactory:
         """Create from symbolic expression string"""
         instance = boolean_function_cls(**kwargs)
         variables = kwargs.get('variables', [f'x{i}' for i in range(instance.n_vars)])
-        instance._add_representation(rep_type, (expression, variables))
+        instance.add_representation(rep_type, (expression, variables))
         return instance
 
     @classmethod
@@ -108,7 +116,7 @@ class BooleanFunctionFactory:
             truth_table[i] = vec in true_inputs
         
         instance = boolean_function_cls(**kwargs)
-        instance._add_representation(rep_type, truth_table)
+        instance.add_representation(rep_type, truth_table)
         return instance
 
     @classmethod
@@ -119,5 +127,5 @@ class BooleanFunctionFactory:
         expression = f"({left_sym} {operator.__name__} {right_sym})"
         
         instance = boolean_function_cls(**kwargs)
-        instance._add_representation(rep_type, expression)
+        instance.add_representation(rep_type, expression)
         return instance

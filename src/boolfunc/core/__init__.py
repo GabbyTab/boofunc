@@ -2,22 +2,20 @@
 
 from .base import BooleanFunction, Evaluable, Representable
 from .builtins import BooleanFunctionBuiltins
-from .representations import (
-    BooleanFunctionRepresentation,
-    RepresentationFactory,
-)
+from .factory import BooleanFunctionFactory
+from .representations import BooleanFunctionRepresentation
 from .adapters import LegacyAdapter
 from .errormodels import ErrorModel, PACErrorModel, ExactErrorModel
-
+from .spaces import Space
 __all__ = [
     "BooleanFunction",
     "Evaluable",
     "Representable",
     "BooleanFunctionBuiltins",
+    "BooleanFunctionFactory",
     "BooleanFunctionRepresentation",
-    "RepresentationFactory",
     "LegacyAdapter",
     "ErrorModel",
     "PACErrorModel",
-    "BooleanCube",
+    "Space",
 ]

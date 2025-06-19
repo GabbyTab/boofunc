@@ -1,9 +1,8 @@
 import numpy as np
-from typing import Any, Dict
+from typing import Any, Dict, Optional, Union, TypeVar, Generic
 from .registry import register_strategy
 from .base import BooleanFunctionRepresentation
-# Import other strategies for conversion
-from .polynomial import PolynomialRepresentation
+
 
 @register_strategy('truth_table')
 class TruthTableRepresentation(BooleanFunctionRepresentation[np.ndarray]):
@@ -32,14 +31,13 @@ class TruthTableRepresentation(BooleanFunctionRepresentation[np.ndarray]):
             'table': data.astype(bool).tolist()
         }
 
-    def convert_from(self, source_repr: BooleanFunctionRepresentation,
+    def convert_from(self, source_repr: str,
                      source_data: Any, **kwargs) -> np.ndarray:
         """Convert from polynomial """
-        if isinstance(source_repr, PolynomialRepresentation):
-            return self._from_polynomial(source_data, **kwargs)
+
         raise NotImplementedError(f"Cannot convert from {type(source_repr)}")
 
-    def convert_to(self, target_repr: BooleanFunctionRepresentation,
+    def convert_to(self, target_repr: str,
                    data: np.ndarray, **kwargs) -> Any:
         """Convert truth table to another representation."""
         return target_repr.convert_from(self, data, **kwargs)

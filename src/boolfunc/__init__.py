@@ -1,2 +1,10 @@
-from .api import create
-__all__ = ['create', 'BooleanFunction']  # other exports as needed
+# boolfunc/__init__.py
+from .api import create  # Add this import
+from .core import BooleanFunction, Space, ExactErrorModel
+
+__all__ = [
+    "BooleanFunction",
+    "Space",
+    "ExactErrorModel",
+    "create"  
+]

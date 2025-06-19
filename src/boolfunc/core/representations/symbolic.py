@@ -49,7 +49,7 @@ class SymbolicRepresentation(BooleanFunctionRepresentation[Tuple[str, List[str]]
         return {"expression": expr, "variables": vars}
 
     def convert_from(
-        self, source_repr: BooleanFunctionRepresentation, source_data: Any, **kwargs
+        self, source_repr: str, source_data: Any, **kwargs
     ) -> Tuple[str, List[str]]:
         """
         Convert another representation into symbolic form.
@@ -59,7 +59,7 @@ class SymbolicRepresentation(BooleanFunctionRepresentation[Tuple[str, List[str]]
         raise NotImplementedError("Conversion to symbolic not implemented")
     
     def convert_to(
-        self, target_repr: BooleanFunctionRepresentation, data: Tuple[str, List[str]], **kwargs
+        self, target_repr: str, data: Tuple[str, List[str]], **kwargs
     ) -> Any:
         """
         Convert symbolic data to another representation.

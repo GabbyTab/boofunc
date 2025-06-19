@@ -3,14 +3,14 @@ import operator
 from abc import ABC, abstractmethod
 from typing import Protocol, Dict, Any, Optional
 import numpy as np
-from ..spaces import BooleanCube
 from .errormodels import ExactErrorModel
 from collections.abc import Iterable
-from .factory import composite_boolean_function
 from .spaces import Space
 from .representations.registry import get_strategy
+from .factory import BooleanFunctionFactory
 
 #The BooleanFunctionRepresentations and Spaces and ErrorModels are in separate files in the same directory, should I import them? 
+
 
 try:
     from numba import jit
@@ -19,15 +19,43 @@ except ImportError:
     USE_NUMBA = False
     warnings.warn("Numba not installed - using pure Python mode")
 
+
+class Property:
+    def __init__(self, name, test_func=None, doc=None, closed_under=None):
+        self.name = name
+        self.test_func = test_func
+        self.doc = doc
+        self.closed_under = closed_under or set()
+
+class PropertyStore:
+    def __init__(self):
+        self._properties = {}
+
+    def add(self, prop: Property, status="user"):
+        self._properties[prop.name] = {"property": prop, "status": status}
+
+    def has(self, name):
+        return name in self._properties
+
+
 class Evaluable(Protocol):
     def evaluate(self, inputs): ...
 
 class Representable(Protocol):
     def to_representation(self, rep_type: str): ...
 
-class BooleanFunction(Evaluable, Representable):
 
-    def __init__(self, space: str = 'plus_minus_cube', error_model: Optional[Any] = None, storage_manager = None, **kwargs):
+
+class BooleanFunction(Evaluable, Representable):
+    def __new__(cls, *args, **kwargs):
+        # Allocate without calling __init__
+        self = super().__new__(cls)
+        # Delegate actual setup to a private initializer
+        self._init(*args, **kwargs)
+        return self
+
+    def _init(self, space: str = 'plus_minus_cube', error_model: Optional[Any] = None, storage_manager=None, **kwargs):
+        # Original __init__ logic moved here
         self.space = self._create_space(space)
         self.representations: Dict[str, Any] = {}
         self.properties = PropertyStore()
@@ -37,47 +65,43 @@ class BooleanFunction(Evaluable, Representable):
         self.n_vars = kwargs.get('n')
         self._metadata = kwargs.get('metadata', {})
 
+
     def __array__(self, dtype=None) -> np.ndarray:
         """Return the truth table as a NumPy array for NumPy compatibility."""
         truth_table = self._get_representation('truth_table')
         return np.asarray(truth_table, dtype=dtype)
 
     def __add__(self, other):
-        return composite_boolean_function(operator.add, self, other)
+        return BooleanFunctionFactory.composite_boolean_function(operator.add, self, other)
 
     def __mul__(self, other):
         if isinstance(other, (int, float)):
             return ScalarMultiple(other, self)
-        return composite_boolean_function(operator.mul, self, other)
+        return BooleanFunctionFactory.composite_boolean_function(operator.mul, self, other)
 
     def __and__(self, other):
-        return composite_boolean_function(operator.and_, self, other)
+        return BooleanFunctionFactory.composite_boolean_function(operator.and_, self, other)
 
     def __or__(self, other):
-        return composite_boolean_function(operator.or_, self, other)
+        return BooleanFunctionFactory.composite_boolean_function(operator.or_, self, other)
 
     def __xor__(self, other):
-        return composite_boolean_function(operator.xor, self, other)
+        return BooleanFunctionFactory.composite_boolean_function(operator.xor, self, other)
 
     def __invert__(self):
-        return composite_boolean_function(operator.invert, self, None) # how is called imp
+        return BooleanFunctionFactory.composite_boolean_function(operator.invert, self, None) # how is called imp
 
     def __pow__(self, exponent):
-        return composite_boolean_function(operator.pow, self, None) 
+        return BooleanFunctionFactory.composite_boolean_function(operator.pow, self, None) 
 
     def __call__(self, inputs):
         return self.evaluate(inputs)
 
     def __str__(self):
-        return f"BooleanFunction(vars={self.n_vars}, space={self.space})"
+        return f"BooleanFunction(vars={self.n_vars}, space={self.space})" #TODO figure out what should be outputed here
 
     def __repr__(self):
-        return f"BooleanFunction(space={self.space}, n_vars={self.n_vars})"
-    
-    def _setup_probabilistic_interface(self):
-        """Configure as scipy.stats-like random variable"""
-        # Add methods that make this behave like rv_discrete/rv_continuous
-        self._configure_sampling_methods()
+        return f"BooleanFunction(space={self.space}, n_vars={self.n_vars})" #TODO figure out what should be outputed here
 
     def _create_space(self, space_type: str):
         if space_type == 'boolean_cube':
@@ -103,7 +127,7 @@ class BooleanFunction(Evaluable, Representable):
             self.representations[rep_type] = self._compute_representation(rep_type)
         return self.representations[rep_type]
 
-    def add_representation(self, rep_type: str = None):
+    def add_representation(self, rep_type: str = None, data = None):
         pass
 
 
@@ -125,7 +149,6 @@ class BooleanFunction(Evaluable, Representable):
             return self._evaluate_deterministic(inputs, representation=representation)
         else:
             raise TypeError(f"Unsupported input type: {type(inputs)}")
-
 
     def _select_representation(self):
         """
@@ -150,9 +173,17 @@ class BooleanFunction(Evaluable, Representable):
         strategy = self._get_strategy(rep)
         return strategy.evaluate(inputs, data)
 
+        
+    def _setup_probabilistic_interface(self):
+        """Configure as scipy.stats-like random variable"""
+        # Add methods that make this behave like rv_discrete/rv_continuous
+        #self._configure_sampling_methods()
+        pass
+
 
     def _evaluate_stochastic(self, rv_inputs, n_samples=1000):
         """Handle random variable inputs using Monte Carlo"""
+        pass
         samples = rv_inputs.rvs(size=n_samples)
         results = [self._evaluate_deterministic(sample) for sample in samples]
         return self._create_result_distribution(results)
@@ -162,35 +193,21 @@ class BooleanFunction(Evaluable, Representable):
 
     def rvs(self, size=1, rng=None):
         """Generate random samples (like scipy.stats)"""
+        pass
         if 'distribution' in self.representations:
             return self.representations['distribution'].rvs(size=size, random_state=rng)
         # Fallback: uniform sampling from truth table
         return self._uniform_sample(size, rng)
     
     def pmf(self, x):
+        pass
         """Probability mass function"""
         if hasattr(self, '_pmf_cache'):
             return self._pmf_cache.get(tuple(x), 0.0)
         return self._compute_pmf(x)
     
     def cdf(self, x):
+        pass
         """Cumulative distribution function"""
-        return self._compute_cdf(x)
+        #return self._compute_cdf(x)
 
-
-class Property:
-    def __init__(self, name, test_func=None, doc=None, closed_under=None):
-        self.name = name
-        self.test_func = test_func
-        self.doc = doc
-        self.closed_under = closed_under or set()
-
-class PropertyStore:
-    def __init__(self):
-        self._properties = {}
-
-    def add(self, prop: Property, status="user"):
-        self._properties[prop.name] = {"property": prop, "status": status}
-
-    def has(self, name):
-        return name in self._properties

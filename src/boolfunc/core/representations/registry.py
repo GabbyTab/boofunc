@@ -1,14 +1,34 @@
 # representations/registry.py
-
-from typing import Callable, Dict, Type
+from typing import Callable, Dict, Type, Any
 from .base import BooleanFunctionRepresentation
 
 STRATEGY_REGISTRY: Dict[str, Type[BooleanFunctionRepresentation]] = {}
 
-def register_strategy(key: str, cls: Type[BooleanFunctionRepresentation]):
-    """Register a full-featured strategy class."""
-    STRATEGY_REGISTRY[key] = cls
+def get_strategy(rep_key: str) -> BooleanFunctionRepresentation:
+    """
+    Retrieve and instantiate the strategy class for the given representation key.
+    
+    Args:
+        rep_key: Representation key (e.g., 'truth_table')
+    
+    Returns:
+        Instance of the strategy class
+        
+    Raises:
+        KeyError: If no strategy is registered for the key
+    """
+    if rep_key not in STRATEGY_REGISTRY:
+        raise KeyError(f"No strategy registered for '{rep_key}'")
+    strategy_cls = STRATEGY_REGISTRY[rep_key]
+    return strategy_cls()
 
+def register_strategy(key: str):
+    """Decorator to register representation classes"""
+    def decorator(cls: Type[BooleanFunctionRepresentation]):
+        STRATEGY_REGISTRY[key] = cls
+        return cls
+    return decorator
+    
 def register_partial_strategy(
     key: str,
     *,
@@ -20,6 +40,7 @@ def register_partial_strategy(
     is_complete: Callable = None,
     get_storage_requirements: Callable = None
 ):
+
     """
     Register a strategy by supplying only the key methods.
     Missing methods raise NotImplementedError by default.
