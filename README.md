@@ -109,7 +109,7 @@ spectral_concentration = analyzer.spectral_concentration(degree=2)
 
 # Property testing
 tester = bf.PropertyTester(f)
-is_linear = tester.blr_linearity_test(num_queries=1000)
+is_linear = tester.blr_linearity_test(num_queries=3)
 is_constant = tester.constant_test()
 
 # Visualization
