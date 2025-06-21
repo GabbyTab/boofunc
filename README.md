@@ -87,7 +87,7 @@ import numpy as np
 
 # Create a Boolean function from truth table
 truth_table = [0, 1, 1, 0, 1, 0, 0, 1]  # 3-variable function
-f = bf.BooleanFunction.from_truth_table(truth_table)
+f = bf.create(truth_table)
 
 # Or create built-in functions
 majority = bf.BooleanFunction.majority(3)
