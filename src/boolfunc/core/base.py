@@ -127,8 +127,16 @@ class BooleanFunction(Evaluable, Representable):
             self.representations[rep_type] = self._compute_representation(rep_type)
         return self.representations[rep_type]
 
-    def add_representation(self, rep_type: str = None, data = None):
-        pass
+
+    def add_representation(self, data, rep_type = None):
+        """Add a representation to this boolean function"""
+        if rep_type == None:
+            factory = BooleanFunctionFactory()
+            rep_type = factory._determine_rep_type(data)
+        
+        self.representations[rep_type] = data
+        return self
+
 
 
     def evaluate(self, inputs, representation=None, **kwargs):
@@ -150,27 +158,18 @@ class BooleanFunction(Evaluable, Representable):
         else:
             raise TypeError(f"Unsupported input type: {type(inputs)}")
 
-    def _select_representation(self):
-        """
-        Return the first available representation key.
-        Uses dict order as fallback.
-        """
-        if not self.representations:
-            raise RuntimeError("No representations available")  
-        return next(iter(self.representations))  # First key in insertion order
+   
 
-    def _get_strategy(self, rep_key: str):
-        """Return the strategy instance for the given representation key."""
-        return get_strategy(rep_key)
-
-    def _evaluate_deterministic(self, inputs, representation=None):
+    def _evaluate_deterministic(self, inputs, rep_type=None):
         """
         Evaluate using the specified or first available representation.
         """
         inputs = np.asarray(inputs)
-        rep = representation or self._select_representation()
-        data = self.representations[rep]
-        strategy = self._get_strategy(rep)
+        if rep_type == None:
+            rep_type = next(iter(self.representations))
+       
+        data = self.representations[rep_type]     
+        strategy = get_strategy(rep_type)
         return strategy.evaluate(inputs, data)
 
         

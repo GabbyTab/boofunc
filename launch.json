@@ -1,0 +1,28 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Debug Tests",
+      "type": "python",
+      "request": "launch",
+      "purpose": ["debug-test"],
+      "module": "pytest",
+      "args": [
+        "--maxfail=1",
+        "--disable-warnings",
+        "${workspaceFolder}/tests/unit/test_base.py"
+      ],
+      "console": "integratedTerminal",
+      "env": {},
+      "justMyCode": false
+    }, 
+    {
+      "name": "Python: Current File",
+      "type": "python",
+      "request": "launch",
+      "program": "${file}",
+      "console": "internalConsole",
+      "internalConsoleOptions": "openOnSessionStart"
+    }
+  ]
+}

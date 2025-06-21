@@ -75,3 +75,7 @@ class TruthTableRepresentation(BooleanFunctionRepresentation[np.ndarray]):
                       for mono in coeffs) % 2
             table[idx] = bool(val)
         return table
+
+    def is_complete(self, data: np.ndarray) -> bool:
+        """Check if the representation contains complete information."""
+        pass
