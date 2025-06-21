@@ -1,6 +1,7 @@
 import numpy as np
 from collections.abc import Iterable
 from .spaces import Space
+import numbers
 
 class BooleanFunctionFactory:
     """Factory for creating BooleanFunction instances from various representations"""
@@ -146,13 +147,27 @@ class BooleanFunctionFactory:
         instance.add_representation(truth_table, rep_type)
         return instance
 
+
     @classmethod
-    def composite_boolean_function(cls, boolean_function_cls, operator, left_func, right_func, rep_type='symbolic', **kwargs):
-        """Create composite function from two BooleanFunctions"""
-        left_sym = left_func.get_representation('symbolic')
-        right_sym = right_func.get_representation('symbolic')
+    def create_composite(cls, boolean_function_cls, operator, left_func, right_func, rep_type='symbolic', **kwargs):
+        """Create composite function from two BooleanFunctions or numerical values"""
+        
+        # Handle numerical types for left function
+        if isinstance(left_func, numbers.Number):
+            left_sym = str(left_func)
+        else:
+            left_sym = left_func.get_representation('symbolic')
+        
+        # Handle numerical types for right function
+        if isinstance(right_func, numbers.Number):
+            right_sym = str(right_func)
+        else:
+            right_sym = right_func.get_representation('symbolic')
+        
+        # Create symbolic expression
         expression = f"({left_sym} {operator.__name__} {right_sym})"
         
+        # Create and return composite instance
         instance = boolean_function_cls(**kwargs)
         instance.add_representation(expression, rep_type)
         return instance

@@ -1,6 +1,6 @@
 # src/boolfunc/core/__init__.py
 
-from .base import BooleanFunction, Evaluable, Representable
+from .base import BooleanFunction, Evaluable, Representable, Property
 from .builtins import BooleanFunctionBuiltins
 from .factory import BooleanFunctionFactory
 from .representations import BooleanFunctionRepresentation
@@ -11,6 +11,7 @@ __all__ = [
     "BooleanFunction",
     "Evaluable",
     "Representable",
+    "Property",
     "BooleanFunctionBuiltins",
     "BooleanFunctionFactory",
     "BooleanFunctionRepresentation",

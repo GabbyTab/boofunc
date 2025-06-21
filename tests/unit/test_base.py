@@ -12,7 +12,7 @@ from boolfunc.core.representations.truth_table import TruthTableRepresentation
 @pytest.fixture
 def xor_function():
     """XOR function with truth table representation"""
-    func = bf.BooleanFunction(n_vars=2)
+    func = bf.create(n=2)
     func.representations = {
         'truth_table': np.array([0, 1, 1, 0])
     }
@@ -21,7 +21,7 @@ def xor_function():
 @pytest.fixture
 def boolean_function():
     """XOR function with truth table representation"""
-    func = bf.BooleanFunction(n_vars=2)
+    func = bf.create(n=2)
     func.representations = {
         'truth_table': np.array([0, 1, 1, 0])
     }
@@ -35,7 +35,7 @@ def scalar_value():
 # Fixture for another BooleanFunction
 @pytest.fixture
 def and_function():
-    func = bf.BooleanFunction(n_vars=2)
+    func = bf.create(n=2)
     func.representations = {
         'truth_table': np.array([0, 0, 0, 1])
     }
@@ -49,13 +49,13 @@ def mock_strategy():
     """
     strategy = MagicMock(spec=TruthTableRepresentation)
     # Configure the mock to return [True, False] when evaluate() is called
-    strategy.evaluate.return_value = np.array([0, 0, 0, 1], dtype=bool)
+    strategy.evaluate.return_value = np.array([0, 1, 1, 0], dtype=bool)
     return strategy
 
 
 @pytest.fixture
 def boolean_function():
-    bf_instance = bf.BooleanFunction(space='plus_minus_cube', n_vars=2)
+    bf_instance = bf.BooleanFunction(space='plus_minus_cube', n=2)
     bf_instance.representations = {
         'truth_table': np.array([0, 1, 1, 0]),
         'function': lambda x: x[0] ^ x[1]
@@ -138,6 +138,9 @@ class TestEvaluation:
         inputs = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
 
         # Act: call the method under test
+
+        mock_get_strategy.return_value = mock_strategy
+
         result = boolean_function._evaluate_deterministic(inputs, rep_type='truth_table')
 
         # Assert: ensure evaluate() was invoked with correct arguments
@@ -162,13 +165,13 @@ class TestEvaluation:
             mock_eval.return_value = [False, True, True, False]
             inputs = np.array([[0,0], [0,1], [1,0], [1,1]])
             results = boolean_function.evaluate(inputs)
-            mock_eval.assert_called_once_with(inputs, representation=None)
+            mock_eval.assert_called_once_with(inputs, rep_type=None)
 
 # 5. Operator Overloading
 class TestOperators:
     def test_and_operator(self, boolean_function):
         with patch('boolfunc.core.factory.BooleanFunctionFactory.create_composite') as mock_factory:
-            other = bf.BooleanFunction.create([0,0,0,1])
+            other = bf.create([0,0,0,1])
             _ = boolean_function & other
             mock_factory.assert_called_once_with(operator.and_, boolean_function, other)
 
@@ -222,7 +225,7 @@ class TestProbabilisticInterface:
     (np.array([1,1]), False)
 ])
 def test_xor_integration(input_data, expected_output):
-    bf_instance = bf.BooleanFunction.from_truth_table([0, 1, 1, 0])
+    bf_instance = bf.create([0, 1, 1, 0], rep_type="truth_table")
     assert bf_instance.evaluate(input_data) == expected_output
 
 
@@ -239,7 +242,7 @@ def test_array_conversion(xor_function):
     assert np.array_equal(bool_arr, [False, True, True, False])
 
 ## 2. Operator methods
-@patch('boolfunc.core.factory.BooleanFunctionFactory.composite_boolean_function')
+@patch('boolfunc.core.factory.BooleanFunctionFactory.create_composite')
 def test_binary_operators(mock_factory, xor_function, and_function):
     """Test +, *, &, |, ^ operators"""
     # Test addition
@@ -264,12 +267,12 @@ def test_binary_operators(mock_factory, xor_function, and_function):
 
 def test_scalar_multiplication(xor_function, scalar_value):
     """Test multiplication with scalar"""
-    with patch('boolfunc.core.ScalarMultiple') as mock_scalar:
+    with patch('boolfunc.core.factory.BooleanFunctionFactory.create_composite') as mock_scalar:
         _ = xor_function * scalar_value
-        mock_scalar.assert_called_with(scalar_value, xor_function)
+        mock_scalar.assert_called_with(operator.mul, xor_function, scalar_value)
 
 ## 3. Unary operators
-@patch('boolfunc.core.factory.BooleanFunctionFactory.composite_boolean_function')
+@patch('boolfunc.core.factory.BooleanFunctionFactory.create_composite')
 def test_unary_operators(mock_factory, xor_function):
     """Test ~ (invert) and ** operators"""
     # Test inversion

@@ -11,7 +11,6 @@ from .factory import BooleanFunctionFactory
 
 #The BooleanFunctionRepresentations and Spaces and ErrorModels are in separate files in the same directory, should I import them? 
 
-
 try:
     from numba import jit
     USE_NUMBA = True
@@ -68,31 +67,29 @@ class BooleanFunction(Evaluable, Representable):
 
     def __array__(self, dtype=None) -> np.ndarray:
         """Return the truth table as a NumPy array for NumPy compatibility."""
-        truth_table = self._get_representation('truth_table')
+        truth_table = self.get_representation('truth_table')
         return np.asarray(truth_table, dtype=dtype)
 
     def __add__(self, other):
-        return BooleanFunctionFactory.composite_boolean_function(operator.add, self, other)
+        return BooleanFunctionFactory.create_composite(operator.add, self, other)
 
     def __mul__(self, other):
-        if isinstance(other, (int, float)):
-            return ScalarMultiple(other, self)
-        return BooleanFunctionFactory.composite_boolean_function(operator.mul, self, other)
+        return BooleanFunctionFactory.create_composite(operator.mul, self, other)
 
     def __and__(self, other):
-        return BooleanFunctionFactory.composite_boolean_function(operator.and_, self, other)
+        return BooleanFunctionFactory.create_composite(operator.and_, self, other)
 
     def __or__(self, other):
-        return BooleanFunctionFactory.composite_boolean_function(operator.or_, self, other)
+        return BooleanFunctionFactory.create_composite(operator.or_, self, other)
 
     def __xor__(self, other):
-        return BooleanFunctionFactory.composite_boolean_function(operator.xor, self, other)
+        return BooleanFunctionFactory.create_composite(operator.xor, self, other)
 
     def __invert__(self):
-        return BooleanFunctionFactory.composite_boolean_function(operator.invert, self, None) # how is called imp
+        return BooleanFunctionFactory.create_composite(operator.invert, self, None) # how is called imp
 
     def __pow__(self, exponent):
-        return BooleanFunctionFactory.composite_boolean_function(operator.pow, self, None) 
+        return BooleanFunctionFactory.create_composite(operator.pow, self, None) 
 
     def __call__(self, inputs):
         return self.evaluate(inputs)
@@ -139,7 +136,7 @@ class BooleanFunction(Evaluable, Representable):
 
 
 
-    def evaluate(self, inputs, representation=None, **kwargs):
+    def evaluate(self, inputs, rep_type=None, **kwargs):
         """
         Evaluate function with automatic input type detection and representation selection.
         
@@ -152,9 +149,9 @@ class BooleanFunction(Evaluable, Representable):
             Boolean result(s) or distribution
         """
         if hasattr(inputs, 'rvs'):  # scipy.stats random variable
-            return self._evaluate_stochastic(inputs, representation=representation, **kwargs)
+            return self._evaluate_stochastic(inputs, rep_type=rep_type, **kwargs)
         elif isinstance(inputs, (list, np.ndarray)):
-            return self._evaluate_deterministic(inputs, representation=representation)
+            return self._evaluate_deterministic(inputs, rep_type=rep_type)
         else:
             raise TypeError(f"Unsupported input type: {type(inputs)}")
 
@@ -170,7 +167,8 @@ class BooleanFunction(Evaluable, Representable):
        
         data = self.representations[rep_type]     
         strategy = get_strategy(rep_type)
-        return strategy.evaluate(inputs, data)
+        result = strategy.evaluate(inputs, data)
+        return result
 
         
     def _setup_probabilistic_interface(self):
