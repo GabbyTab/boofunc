@@ -8,15 +8,23 @@ from .base import BooleanFunctionRepresentation
 class TruthTableRepresentation(BooleanFunctionRepresentation[np.ndarray]):
     """Truth table representation using NumPy arrays."""
 
-    def evaluate(self, inputs: np.ndarray, data: np.ndarray) -> Union[bool, np.ndarray]:
-        """Evaluate using direct table lookup."""
-        # Single input vector
-        if inputs.ndim == 1:
-            idx = self._compute_index(inputs)
-            return bool(data[idx])
-        # Batch of input vectors
-        indices = [self._compute_index(row) for row in inputs]
-        return data[np.array(indices)]
+    def evaluate(self, inputs: np.ndarray, data: np.ndarray, **kwargs) -> Union[bool, np.ndarray]:
+        # Input validation
+        if not isinstance(inputs, np.ndarray):
+            raise TypeError(f"Expected np.ndarray, got {type(inputs)}")
+        
+        # Integer index processing
+        elif np.issubdtype(inputs.dtype, np.integer):
+        # Validate bounds
+        if np.any((inputs < 0) | (inputs >= len(data))):
+            raise ValueError(f"Index out of bounds for truth table of size {len(data)}")
+        
+        # Direct indexing handles both scalars and arrays
+        return data[inputs]
+   
+    def _compute_index(self, bits: np.ndarray) -> int:
+        """Optimized bit packing using NumPy"""
+        return int(np.packbits(bits.astype(np.uint8), bitorder='big')[0])
 
     def dump(self, data: np.ndarray, **kwargs) -> Dict[str, Any]:
         """
@@ -57,15 +65,17 @@ class TruthTableRepresentation(BooleanFunctionRepresentation[np.ndarray]):
             'space_complexity': f'O(2^{n_vars})'
         }
 
+    def time_complexity_rank(self, n_vars: int) -> Dict[str, int]:
+        """Return time_complexity for computing/evalutating n variables."""
+        pass
+
     def _compute_index(self, bits: np.ndarray) -> int:
-        """Convert a binary vector to its integer index."""
-        # Ensure boolean dtype and flatten
-        bits = bits.astype(bool).flatten()
-        # Interpret MSB at index 0
-        return int(np.dot(bits, 1 << np.arange(bits.size)[::-1]))
+        """Convert boolean vector to integer index using bit packing"""
+        return int(np.packbits(bits.astype(np.uint8), bitorder='big')[0])
+
 
     def _from_polynomial(self, coeffs: Dict[tuple, float], **kwargs) -> np.ndarray:
-        """Build a truth table from polynomial coefficients."""
+        """Build a truth table from polynomial coefficients. Speedy version should use FFT depending on size"""
         n_vars = kwargs.get('n_vars', int(max(idx for mono in coeffs for idx in mono) + 1))
         table = self.create_empty(n_vars)
         for idx in range(table.size):

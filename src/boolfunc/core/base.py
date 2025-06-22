@@ -115,8 +115,15 @@ class BooleanFunction(Evaluable, Representable):
             raise ValueError(f"Unknown space type: {space_type}")
     
     def _compute_representation(self, rep_type: str):
-        # Implement conversion logic here
-        pass
+        # Implement conversion logic here - Compute from nearest representation or run Dijkstra's 
+        # if no representations, the function should error
+        if rep_type == None:
+            rep_type = next(iter(self.representations))
+       
+        data = self.representations[rep_type] 
+        strategy = get_strategy(rep_type)
+        result = strategy.convert_to(rep_type, data)
+        return result
       
     def get_representation(self, rep_type: str):
         """Retrieve or compute representation"""

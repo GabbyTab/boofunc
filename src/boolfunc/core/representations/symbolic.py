@@ -11,9 +11,8 @@ class SymbolicRepresentation(BooleanFunctionRepresentation[Tuple[str, List[str]]
     
     Data format: (expression: str, variables: List[str])
     """
-    def evaluate(
-        self, inputs: np.ndarray, data: Tuple[str, List[str]]
-    ) -> Union[bool, np.ndarray]:
+    def evaluate(self, inputs: np.ndarray, data: DataType, **kwargs) -> Union[bool, np.ndarray]:
+
         """
         Evaluate the symbolic expression using Python eval.
         

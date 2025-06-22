@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional, Union, TypeVar, Generic
 import numpy as np
+from ..spaces import Space
+
 
 DataType = TypeVar('DataType')
 
@@ -8,7 +10,7 @@ class BooleanFunctionRepresentation(ABC, Generic[DataType]):
     """Abstract base class for all Boolean function representations"""
     
     @abstractmethod
-    def evaluate(self, inputs: np.ndarray, data: DataType) -> Union[bool, np.ndarray]:
+    def evaluate(self, inputs: np.ndarray, space: Space, data: DataType, **kwargs) -> Union[bool, np.ndarray]:
         """
         Evaluate the function on given inputs using the provided data.
         
@@ -22,7 +24,7 @@ class BooleanFunctionRepresentation(ABC, Generic[DataType]):
         pass
 
     @abstractmethod
-    def dump(self, data: DataType, **kwargs) -> Dict[str, Any]:
+    def dump(self, data: DataType, space: Space, **kwargs) -> Dict[str, Any]:
         """
         Export the representation data in a serializable format.
         
@@ -53,7 +55,7 @@ class BooleanFunctionRepresentation(ABC, Generic[DataType]):
 
     @abstractmethod
     def convert_to(self, target_repr: 'BooleanFunctionRepresentation',
-                  data: DataType, **kwargs) -> Any:
+                  data: Any, **kwargs) -> Any:
         """
         Convert from this representation to target representation.
         
@@ -78,6 +80,11 @@ class BooleanFunctionRepresentation(ABC, Generic[DataType]):
         pass
 
     @abstractmethod
+    def time_complexity_rank(self, n_vars: int) -> Dict[str, int]:
+        """Return time_complexity for computing/evalutating n variables."""
+        pass
+
+    @abstractmethod
     def get_storage_requirements(self, n_vars: int) -> Dict[str, int]:
         """Return memory/storage requirements for n variables."""
         pass
@@ -91,7 +98,7 @@ class BooleanFunctionRepresentation(ABC, Generic[DataType]):
         return f"{self.__class__.__name__}()"
 
 
-class PartialRepresentation(Generic[DataType]):
+class ppppppp(Generic[DataType]):
     """Wrapper for handling partial representation data."""
     
     def __init__(self, strategy: BooleanFunctionRepresentation[DataType], 
