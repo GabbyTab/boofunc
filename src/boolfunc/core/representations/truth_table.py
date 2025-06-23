@@ -45,14 +45,21 @@ class TruthTableRepresentation(BooleanFunctionRepresentation[np.ndarray]):
             'values': data.astype(bool).tolist()
         }
 
-    def convert_from(self, source_repr: str,
-                     source_data: Any, **kwargs) -> np.ndarray:
-        """Convert from polynomial """
+    def convert_from(self, source_repr: BooleanFunctionRepresentation, source_data: Any, space: Space, n_vars: int, **kwargs) -> np.ndarray:
+        """Convert from any representation by evaluating all possible inputs."""
+        size = 1 << n_vars  # 2^n
+        truth_table = np.zeros(size, dtype=bool)
 
-        raise NotImplementedError(f"Cannot convert from {type(source_repr)}")
+        # Generate all possible input indices
+        for idx in range(size):
+            value = source_repr.evaluate(idx, source_data, space, n_vars, **kwargs)
+            #should handle differentley depending on the space
+            value = (1 - value)/2
+            truth_table[idx] = value
 
-    def convert_to(self, target_repr: str,
-                   data: np.ndarray, **kwargs) -> Any:
+        return truth_table
+
+    def convert_to(self, target_repr: BooleanFunctionRepresentation, target_data: Any, space: Space, n_vars: int, **kwargs) -> np.ndarray:
         """Convert truth table to another representation."""
         return target_repr.convert_from(self, data, **kwargs)
 

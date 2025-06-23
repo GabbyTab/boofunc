@@ -55,17 +55,40 @@ class FourierExpansionRepresentation(BooleanFunctionRepresentation[np.ndarray]):
             }
         }
 
-    def convert_from(self, source_repr: 'BooleanFunctionRepresentation', 
-                    source_data: Any, **kwargs) -> np.ndarray:
-        """Convert from another representation to Fourier expansion"""
-        # Placeholder: Actual conversion requires Fourier transform implementation
-        n_vars = kwargs.get('n_vars')
-        if n_vars is None:
-            raise ValueError("n_vars must be provided for conversion")
-        return self._compute_fourier_coeffs(source_repr, source_data, n_vars)
+    def convert_from(self, source_repr: BooleanFunctionRepresentation, source_data: Any, space: Space, n_vars: int, **kwargs) -> np.ndarray:
+        """
+        Compute Fourier coefficients from any evaluable Boolean representation.
+        Fourier basis: {(-1)^{x·s}} for s ⊆ [n]
+        """
 
-    def convert_to(self, target_repr: 'BooleanFunctionRepresentation',
-                  data: np.ndarray, **kwargs) -> Any:
+        size = 1 << n_vars  # 2^n
+        coeffs = []
+
+        # Generate all input vectors x (as bits) and their integer indices
+        x_bits = np.array([list(map(int, np.binary_repr(i, n_vars))) for i in range(size)])
+        x_indices = np.arange(size, dtype=int)
+
+        # Evaluate function f on all inputs
+        f_vals = source_repr.evaluate(x_indices, source_data, None, n_vars, **kwargs)
+        f_vals = np.asarray(f_vals, dtype=float)
+        
+        # Optionally map {0,1} to {1,-1} for Boolean-to-sign function conversion
+        f_vals = 1 - 2 * f_vals  # Now f ∈ {1, -1}
+
+        # For all subsets S ⊆ [n] (Fourier basis functions)
+        for i in range(size):
+            S = tuple(j for j in range(n_vars) if (i >> j) & 1)
+
+            # Compute parity vector: (-1)^{x·S}
+            signs = (-1) ** np.sum(x_bits[:, list(S)], axis=1)
+            coeff = np.dot(f_vals, signs) / size
+
+            if coeff != 0.0:
+                coeffs.append(coeff)
+
+        return np.array(coeffs)
+
+    def convert_to(self, target_repr: BooleanFunctionRepresentation, target_data: Any, space: Space, n_vars: int, **kwargs) -> np.ndarray:
         """Convert to another representation from Fourier expansion"""
         # Placeholder: Actual conversion requires inverse transform
         n_vars = int(np.log2(len(data)))

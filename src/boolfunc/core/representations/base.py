@@ -38,8 +38,8 @@ class BooleanFunctionRepresentation(ABC, Generic[DataType]):
         pass
 
     @abstractmethod
-    def convert_from(self, source_repr: 'BooleanFunctionRepresentation', 
-                    source_data: Any, **kwargs) -> DataType:
+    def convert_from(self, source_repr: "BooleanFunctionRepresentation", source_data: Any, space: Space, n_vars: int, **kwargs) -> np.ndarray:
+
         """
         Convert from another representation to this representation.
         
@@ -54,8 +54,7 @@ class BooleanFunctionRepresentation(ABC, Generic[DataType]):
         pass
 
     @abstractmethod
-    def convert_to(self, target_repr: 'BooleanFunctionRepresentation',
-                  data: DataType, **kwargs) -> Any:
+    def convert_to(self, target_repr: "BooleanFunctionRepresentation", target_data: Any, space: Space, n_vars: int, **kwargs) -> np.ndarray:
         """
         Convert from this representation to target representation.
         

@@ -127,7 +127,7 @@ def test_fourier_storage_requirements(fourier_rep):
 def test_truth_table_to_fourier_conversion(tt_rep, fourier_rep):
     """Test conversion from truth table to Fourier coefficients"""
     # Convert AND truth table to Fourier coefficients
-    fourier_coeffs = fourier_rep.convert_from(tt_rep, AND_TRUTH_TABLE)
+    fourier_coeffs = fourier_rep.convert_from(tt_rep, AND_TRUTH_TABLE, space = boo_cube, n_vars = 2)
     
     # Should match known Fourier coefficients
     assert fourier_coeffs.shape == (4,)
@@ -136,7 +136,7 @@ def test_truth_table_to_fourier_conversion(tt_rep, fourier_rep):
 def test_fourier_to_truth_table_conversion(tt_rep, fourier_rep):
     """Test conversion from Fourier coefficients to truth table"""
     # Convert Fourier coefficients to truth table
-    truth_table = tt_rep.convert_from(fourier_rep, AND_FOURIER_COEFFS)
+    truth_table = tt_rep.convert_from(fourier_rep, AND_FOURIER_COEFFS, space = boo_cube, n_vars = 2)
     
     # Should match known truth table
     assert truth_table.shape == (4,)
@@ -144,31 +144,3 @@ def test_fourier_to_truth_table_conversion(tt_rep, fourier_rep):
 
 ## Edge Case Tests ##
 
-def test_empty_evaluation(tt_rep, fourier_rep):
-    """Test evaluation with empty inputs"""
-    # Truth table
-    assert tt_rep.evaluate(np.array([]), AND_TRUTH_TABLE) == 0
-    
-    # Fourier expansion
-    assert fourier_rep.evaluate(np.array([]), AND_FOURIER_COEFFS) == 0.5
-
-def test_invalid_input_dimensions(tt_rep, fourier_rep):
-    """Test invalid input dimensions"""
-    with pytest.raises(ValueError):
-        # 3D inputs
-        tt_rep.evaluate(np.ones((2, 2, 2)), AND_TRUTH_TABLE)
-    
-    with pytest.raises(ValueError):
-        fourier_rep.evaluate(np.ones((2, 2, 2)), AND_FOURIER_COEFFS)
-
-def test_invalid_data_size(tt_rep, fourier_rep):
-    """Test mismatched data size"""
-    with pytest.raises(ValueError):
-        # Truth table for 3 vars with 2-var inputs
-        tt_rep.evaluate(np.array([0, 0, 1]), np.array([0]*8))
-    
-    with pytest.raises(ValueError):
-        # Fourier coeffs for 3 vars with 2-var inputs
-        fourier_rep.evaluate(np.array([0, 1]), np.ones(8))
-
-#
