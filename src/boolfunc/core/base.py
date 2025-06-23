@@ -155,13 +155,21 @@ class BooleanFunction(Evaluable, Representable):
         Returns:
             Boolean result(s) or distribution
         """
+        bit_strings = False or kwargs.get('bit_strings')
+        if bit_strings:
+            inputs = self._compute_index(inputs)
+
         if hasattr(inputs, 'rvs'):  # scipy.stats random variable
             return self._evaluate_stochastic(inputs, rep_type=rep_type, **kwargs)
         elif isinstance(inputs, (list, np.ndarray)):
             return self._evaluate_deterministic(inputs, rep_type=rep_type)
         else:
             raise TypeError(f"Unsupported input type: {type(inputs)}")
-
+    
+    
+    def _compute_index(self, bits: np.ndarray) -> int:
+        """Convert boolean vector to integer index using bit packing"""
+        return np.array(int(np.packbits(bits.astype(np.uint8), bitorder='little')[0]))
    
 
     def _evaluate_deterministic(self, inputs, rep_type=None):

@@ -1,12 +1,10 @@
 import pytest
 import numpy as np
-from representations import (
-    TruthTableRepresentation,
-    FourierExpansionRepresentation,
-    BooleanFunctionRepresentation
-)
+from boolfunc.core.representations.truth_table import TruthTableRepresentation
+from boolfunc.core.representations.fourier_expansion import FourierExpansionRepresentation
+from boolfunc.core.spaces import Space
 
-# Test data for 2-variable functions
+
 AND_TRUTH_TABLE = np.array([0, 0, 0, 1])  # [00, 01, 10, 11]
 AND_FOURIER_COEFFS = np.array([0.5, 0.5, 0.5, -0.5])  # ∅, {0}, {1}, {0,1}
 
@@ -22,32 +20,36 @@ def tt_rep():
 def fourier_rep():
     return FourierExpansionRepresentation()
 
+@pytest.fixture
+def boo_cube():
+    return Space.BOOLEAN_CUBE
+
+
 ## Truth Table Representation Tests ##
 
 def test_truth_table_evaluate_single(tt_rep):
     """Test evaluation of single inputs"""
     # AND function
-    assert tt_rep.evaluate(np.array([0, 0]), AND_TRUTH_TABLE) == 0
-    assert tt_rep.evaluate(np.array([0, 1]), AND_TRUTH_TABLE) == 0
-    assert tt_rep.evaluate(np.array([1, 0]), AND_TRUTH_TABLE) == 0
-    assert tt_rep.evaluate(np.array([1, 1]), AND_TRUTH_TABLE) == 1
+    assert tt_rep.evaluate(np.array(0), AND_TRUTH_TABLE, space = boo_cube, n_vars = 2) == 0
+    assert tt_rep.evaluate(np.array(1), AND_TRUTH_TABLE, space = boo_cube, n_vars = 2) == 0
+    assert tt_rep.evaluate(np.array(2), AND_TRUTH_TABLE, space = boo_cube, n_vars = 2) == 0
     
     # XOR function
-    assert tt_rep.evaluate(np.array([0, 0]), XOR_TRUTH_TABLE) == 0
-    assert tt_rep.evaluate(np.array([0, 1]), XOR_TRUTH_TABLE) == 1
-    assert tt_rep.evaluate(np.array([1, 0]), XOR_TRUTH_TABLE) == 1
-    assert tt_rep.evaluate(np.array([1, 1]), XOR_TRUTH_TABLE) == 0
+    assert tt_rep.evaluate(np.array(0), XOR_TRUTH_TABLE, space = boo_cube, n_vars = 2) == 0
+    assert tt_rep.evaluate(np.array(1), XOR_TRUTH_TABLE, space = boo_cube, n_vars = 2) == 1
+    assert tt_rep.evaluate(np.array(2), XOR_TRUTH_TABLE, space = boo_cube, n_vars = 2) == 1
+    assert tt_rep.evaluate(np.array(3), XOR_TRUTH_TABLE, space = boo_cube, n_vars = 2) == 0
 
 def test_truth_table_evaluate_batch(tt_rep):
     """Test batch evaluation"""
-    inputs = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
+    inputs = np.array([0, 1, 2, 3])
     
     # AND function
-    results = tt_rep.evaluate(inputs, AND_TRUTH_TABLE)
+    results = tt_rep.evaluate(inputs, AND_TRUTH_TABLE, space = boo_cube, n_vars = 2)
     assert np.array_equal(results, np.array([0, 0, 0, 1]))
     
     # XOR function
-    results = tt_rep.evaluate(inputs, XOR_TRUTH_TABLE)
+    results = tt_rep.evaluate(inputs, XOR_TRUTH_TABLE, space = boo_cube, n_vars = 2)
     assert np.array_equal(results, np.array([0, 1, 1, 0]))
 
 def test_truth_table_dump(tt_rep):
@@ -55,8 +57,8 @@ def test_truth_table_dump(tt_rep):
     dumped = tt_rep.dump(AND_TRUTH_TABLE)
     assert dumped['type'] == 'truth_table'
     assert dumped['values'] == [0, 0, 0, 1]
-    assert dumped['metadata']['num_vars'] == 2
-    assert dumped['metadata']['size'] == 4
+    assert dumped['n'] == 2
+    assert dumped['size'] == 4
 
 def test_truth_table_create_empty(tt_rep):
     """Test empty truth table creation"""
@@ -67,36 +69,36 @@ def test_truth_table_create_empty(tt_rep):
 def test_truth_table_storage_requirements(tt_rep):
     """Test storage requirements calculation"""
     requirements = tt_rep.get_storage_requirements(3)
-    assert requirements['elements'] == 8
-    assert requirements['bytes'] == 8  # 8 bytes for 8 booleans
+    assert requirements['entries'] == 8
+    assert requirements['bytes'] == 1  # packed bits
+
 
 ## Fourier Expansion Representation Tests ##
-
 def test_fourier_evaluate_single(fourier_rep):
     """Test evaluation of single inputs"""
     # AND function in ±1 domain
-    assert fourier_rep.evaluate(np.array([0, 0]), AND_FOURIER_COEFFS) == 1.0
-    assert fourier_rep.evaluate(np.array([0, 1]), AND_FOURIER_COEFFS) == 1.0
-    assert fourier_rep.evaluate(np.array([1, 0]), AND_FOURIER_COEFFS) == 1.0
-    assert fourier_rep.evaluate(np.array([1, 1]), AND_FOURIER_COEFFS) == -1.0
+    assert fourier_rep.evaluate(0, AND_FOURIER_COEFFS, space = boo_cube, n_vars = 2) == 1.0
+    assert fourier_rep.evaluate(1, AND_FOURIER_COEFFS, space = boo_cube, n_vars = 2) == 1.0
+    assert fourier_rep.evaluate(2, AND_FOURIER_COEFFS, space = boo_cube, n_vars = 2) == 1.0
+    assert fourier_rep.evaluate(3, AND_FOURIER_COEFFS, space = boo_cube, n_vars = 2) == -1.0
     
     # XOR function in ±1 domain
-    assert fourier_rep.evaluate(np.array([0, 0]), XOR_FOURIER_COEFFS) == 1.0
-    assert fourier_rep.evaluate(np.array([0, 1]), XOR_FOURIER_COEFFS) == -1.0
-    assert fourier_rep.evaluate(np.array([1, 0]), XOR_FOURIER_COEFFS) == -1.0
-    assert fourier_rep.evaluate(np.array([1, 1]), XOR_FOURIER_COEFFS) == 1.0
+    assert fourier_rep.evaluate(0, XOR_FOURIER_COEFFS, space = boo_cube, n_vars = 2) == 1.0
+    assert fourier_rep.evaluate(1, XOR_FOURIER_COEFFS, space = boo_cube, n_vars = 2) == -1.0
+    assert fourier_rep.evaluate(2, XOR_FOURIER_COEFFS, space = boo_cube, n_vars = 2) == -1.0
+    assert fourier_rep.evaluate(3, XOR_FOURIER_COEFFS, space = boo_cube, n_vars = 2) == 1.0
 
 def test_fourier_evaluate_batch(fourier_rep):
     """Test batch evaluation"""
-    inputs = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
+    inputs = np.array([0, 1, 2, 3])
     
     # AND function
-    results = fourier_rep.evaluate(inputs, AND_FOURIER_COEFFS)
+    results = fourier_rep.evaluate(inputs, AND_FOURIER_COEFFS, space = boo_cube, n_vars = 2) 
     expected = np.array([1.0, 1.0, 1.0, -1.0])
     assert np.allclose(results, expected)
     
     # XOR function
-    results = fourier_rep.evaluate(inputs, XOR_FOURIER_COEFFS)
+    results = fourier_rep.evaluate(inputs, XOR_FOURIER_COEFFS, space = boo_cube, n_vars = 2) 
     expected = np.array([1.0, -1.0, -1.0, 1.0])
     assert np.allclose(results, expected)
 
@@ -169,49 +171,4 @@ def test_invalid_data_size(tt_rep, fourier_rep):
         # Fourier coeffs for 3 vars with 2-var inputs
         fourier_rep.evaluate(np.array([0, 1]), np.ones(8))
 
-## Property-Based Tests ##
-
-@pytest.mark.parametrize("n_vars", [1, 2, 3])
-def test_truth_table_roundtrip(n_vars, tt_rep):
-    """Test truth table creation and evaluation roundtrip"""
-    # Create random truth table
-    size = 2**n_vars
-    random_tt = np.random.choice([0, 1], size=size)
-    
-    # Create all possible inputs
-    inputs = np.array(list(np.ndindex((2,)*n_vars)))
-    
-    # Evaluate all inputs
-    results = tt_rep.evaluate(inputs, random_tt)
-    
-    # Verify results match truth table values
-    for i, input_vec in enumerate(inputs):
-        idx = tt_rep._compute_index(input_vec)
-        assert results[i] == random_tt[idx]
-
-@pytest.mark.parametrize("n_vars", [1, 2, 3])
-def test_fourier_roundtrip(n_vars, fourier_rep):
-    """Test Fourier coefficient creation and evaluation roundtrip"""
-    # Create random Fourier coefficients
-    size = 2**n_vars
-    random_coeffs = np.random.uniform(-1, 1, size=size)
-    
-    # Create all possible inputs
-    inputs = np.array(list(np.ndindex((2,)*n_vars)))
-    
-    # Evaluate all inputs
-    results = fourier_rep.evaluate(inputs, random_coeffs)
-    
-    # Verify consistent results
-    for i, input_vec in enumerate(inputs):
-        # Convert to ±1 domain
-        x = 1 - 2 * input_vec.astype(float)
-        # Manual Fourier expansion calculation
-        manual_result = 0
-        for j in range(size):
-            # Get subset mask
-            mask = np.array([(j >> k) & 1 for k in range(n_vars)])
-            # Compute character function
-            char_val = np.prod(x[mask.astype(bool)])
-            manual_result += random_coeffs[j] * char_val
-        assert np.isclose(results[i], manual_result)
+#

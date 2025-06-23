@@ -1,16 +1,14 @@
 import numpy as np
-from typing import Any, Dict, Optional, Union, List, Tuple
-from .base import BooleanFunctionRepresentation, DataType
+from typing import Any, Dict, Optional, Union, TypeVar, Generic
+from .registry import register_strategy
+from .base import BooleanFunctionRepresentation
 from ..spaces import Space
 
 @register_strategy('fourier_expansion')
 class FourierExpansionRepresentation(BooleanFunctionRepresentation[np.ndarray]):
     """Fourier expansion representation of Boolean functions"""
     
-    def __init__(self):
-        super().__init__('fourier_expansion')
-    
-    def evaluate(self, inputs: np.ndarray, space: Space, data: DataType, **kwargs) -> Union[bool, np.ndarray]:
+    def evaluate(self, inputs: np.ndarray, data: Any, space: Space, n_vars: int, **kwargs) -> Union[bool, np.ndarray]:
         """
         Evaluate the Fourier expansion at given inputs.
         
@@ -21,32 +19,30 @@ class FourierExpansionRepresentation(BooleanFunctionRepresentation[np.ndarray]):
         Returns:
             Fourier expansion values (real numbers)
         """
-        n_vars = int(np.log2(len(data)))
-        
+    
         # Convert to ±1 domain
-        
-        
-        if inputs.ndim == 1:
+
+        if not isinstance(inputs, np.ndarray):
             return self._evaluate_single(inputs, data, n_vars)
         return self._evaluate_batch(inputs, data, n_vars)
     
-    def _evaluate_single(self, x: np.ndarray, coeffs: np.ndarray, n_vars: int) -> float:
-        """Evaluate single input vector"""
+    def _evaluate_single(self, x: int, coeffs: np.ndarray, n_vars: int) -> float:
+        """Evaluate f(x) given x as an integer bitstring, and coeffs of Fourier expansion over {0,1}^n"""
         result = 0.0
         for j in range(len(coeffs)):
-            # Get binary representation of subset index
-            s = np.array([(j >> i) & 1 for i in range(n_vars)])
-            # Compute character function χ_s(x) = ∏_{i in s} x_i
-            char_val = np.prod(x[s.astype(bool)])
+            parity = bin(x & j).count("1") % 2
+            char_val = (-1) ** parity
             result += coeffs[j] * char_val
         return result
+
     
     def _evaluate_batch(self, X: np.ndarray, coeffs: np.ndarray, n_vars: int) -> np.ndarray:
-        """Evaluate batch of inputs"""
-        results = np.zeros(X.shape[0])
+        """Evaluate a batch of inputs X, where each x is an integer bitstring"""
+        results = np.zeros(len(X))
         for idx, x in enumerate(X):
             results[idx] = self._evaluate_single(x, coeffs, n_vars)
         return results
+
 
     def dump(self, data: np.ndarray, **kwargs) -> Dict[str, Any]:
         """Export Fourier coefficients in serializable format"""
@@ -82,6 +78,10 @@ class FourierExpansionRepresentation(BooleanFunctionRepresentation[np.ndarray]):
     def is_complete(self, data: np.ndarray) -> bool:
         """Check if representation contains non-zero coefficients"""
         return np.any(data != 0)
+
+    def time_complexity_rank(self, n_vars: int) -> Dict[str, int]:
+        """Return time_complexity for computing/evalutating n variables."""
+        pass
 
     def get_storage_requirements(self, n_vars: int) -> Dict[str, int]:
         """Return memory requirements for n variables"""

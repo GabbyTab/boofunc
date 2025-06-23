@@ -226,7 +226,7 @@ class TestProbabilisticInterface:
 ])
 def test_xor_integration(input_data, expected_output):
     bf_instance = bf.create([0, 1, 1, 0], rep_type="truth_table")
-    assert bf_instance.evaluate(input_data) == expected_output
+    assert bf_instance.evaluate(input_data, bit_strings=True) == expected_output
 
 
 
