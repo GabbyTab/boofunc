@@ -299,7 +299,7 @@ If you use BoolFunc in your research, please cite:
 ```text
 @software{boolfunc2024,
   title={BoolFunc: A Comprehensive Python Library for Boolean Function Analysis},
-  author={Your Name and Contributors},
+  author={Gabriel Taboada},
   year={2024},
   url={https://github.com/username/boolfunc},
   version={1.0.0}
