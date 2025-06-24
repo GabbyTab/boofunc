@@ -9,19 +9,15 @@ from ..spaces import Space
 class TruthTableRepresentation(BooleanFunctionRepresentation[np.ndarray]):
     """Truth table representation using NumPy arrays."""
 
-    def evaluate(self, inputs: np.ndarray, data: Any, space: Space, n_vars: int, **kwargs) -> Union[bool, np.ndarray]:
+    def evaluate(self, inputs: np.ndarray, data: np.ndarray, space: Space, n_vars: int) -> np.ndarray:
         # Input validation
         if not isinstance(inputs, np.ndarray):
             raise TypeError(f"Expected np.ndarray, got {type(inputs)}")
           
-        # Validate bounds
-        if np.any((inputs < 0) | (inputs >= 2**n_vars)):
-            raise ValueError(f"Index out of bounds for truth table of size {len(data)}")
-
         output = data[inputs]
 
         if np.isscalar(output) or output.shape == ():
-            return output.item()  # unwrap np.bool_ or np.int_ to bool/int
+            return output  # unwrap np.bool_ or np.int_ to bool/int
     
         # Direct indexing handles both scalars and arrays
         return output
@@ -52,16 +48,16 @@ class TruthTableRepresentation(BooleanFunctionRepresentation[np.ndarray]):
 
         # Generate all possible input indices
         for idx in range(size):
-            value = source_repr.evaluate(idx, source_data, space, n_vars, **kwargs)
+            value = source_repr.evaluate(idx, source_data, space, n_vars)
             #should handle differentley depending on the space
             value = (1 - value)/2
             truth_table[idx] = value
 
         return truth_table
 
-    def convert_to(self, target_repr: BooleanFunctionRepresentation, target_data: Any, space: Space, n_vars: int, **kwargs) -> np.ndarray:
+    def convert_to(self, target_repr: BooleanFunctionRepresentation, souce_data: Any, space: Space, n_vars: int, **kwargs) -> np.ndarray:
         """Convert truth table to another representation."""
-        return target_repr.convert_from(self, data, **kwargs)
+        return target_repr.convert_from(self, souce_data, space, n_vars, **kwargs)
 
     def create_empty(self, n_vars: int, **kwargs) -> np.ndarray:
         """Create an empty (all-False) truth table for n variables."""
@@ -83,18 +79,6 @@ class TruthTableRepresentation(BooleanFunctionRepresentation[np.ndarray]):
         pass
 
 
-
-    def _from_polynomial(self, coeffs: Dict[tuple, float], **kwargs) -> np.ndarray:
-        """Build a truth table from polynomial coefficients. Speedy version should use FFT depending on size"""
-        n_vars = kwargs.get('n_vars', int(max(idx for mono in coeffs for idx in mono) + 1))
-        table = self.create_empty(n_vars)
-        for idx in range(table.size):
-            inp = np.array(list(map(int, np.binary_repr(idx, n_vars))))
-            # Evaluate polynomial mod 2
-            val = sum(coeffs.get(mono, 0.0) * np.prod(inp[list(mono)]) 
-                      for mono in coeffs) % 2
-            table[idx] = bool(val)
-        return table
 
     def is_complete(self, data: np.ndarray) -> bool:
         """Check if the representation contains complete information."""

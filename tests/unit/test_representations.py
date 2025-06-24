@@ -2,7 +2,22 @@ import pytest
 import numpy as np
 from boolfunc.core.representations.truth_table import TruthTableRepresentation
 from boolfunc.core.representations.fourier_expansion import FourierExpansionRepresentation
+from boolfunc.core.representations.symbolic import SymbolicRepresentation
 from boolfunc.core.spaces import Space
+
+# Dummy BooleanFunction wrapper for testing
+class DummyBooleanFunction:
+    def __init__(self, repr_type, data, space, n_vars):
+        self.repr_type = repr_type
+        self.data = data
+        self.n_vars = n_vars
+        self.space = space
+
+    def get_n_vars(self):
+        return self.n_vars
+
+    def evaluate(self, inputs, rep_type=None, **kwargs):
+        return self.repr_type.evaluate(inputs, self.data, self.space, self.n_vars)
 
 
 AND_TRUTH_TABLE = np.array([0, 0, 0, 1])  # [00, 01, 10, 11]
@@ -12,6 +27,11 @@ XOR_TRUTH_TABLE = np.array([0, 1, 1, 0])
 XOR_FOURIER_COEFFS = np.array([0, 0, 0, 1])  # Only {0,1} term
 
 # Fixtures for common test objects
+
+@pytest.fixture
+def sym_rep():
+    return SymbolicRepresentation()
+
 @pytest.fixture
 def tt_rep():
     return TruthTableRepresentation()
@@ -122,8 +142,66 @@ def test_fourier_storage_requirements(fourier_rep):
     assert requirements['elements'] == 16
     assert requirements['bytes'] == 128  # 16 floats * 8 bytes each
 
-## Conversion Tests ##
 
+## Symbolic representation tests
+def test_symbolic_evaluate_single(sym_rep):
+    """Test evaluating a symbolic expression with one wrapped function"""
+    expr = "x0"
+    vars = [DummyBooleanFunction(TruthTableRepresentation(), AND_TRUTH_TABLE, Space.BOOLEAN_CUBE, 2)]
+    
+    # should evaluate AND(x0, x1)
+    result = sym_rep.evaluate(np.array(3), (expr, vars), space=Space.BOOLEAN_CUBE, n_vars=2)
+    assert result == 1
+
+    result = sym_rep.evaluate(np.array(1), (expr, vars), space=Space.BOOLEAN_CUBE, n_vars=2)
+    assert result == 0
+
+def test_symbolic_evaluate_sum_two_functions(sym_rep):
+    """Test evaluating a symbolic expression that sums two subfunctions"""
+    expr = "x0 + x1"  # sum of outputs from two subfunctions
+
+    # Two identical AND functions
+    vars = [
+        DummyBooleanFunction(TruthTableRepresentation(), AND_TRUTH_TABLE, Space.BOOLEAN_CUBE, 2),
+        DummyBooleanFunction(TruthTableRepresentation(), AND_TRUTH_TABLE, Space.BOOLEAN_CUBE, 2)
+    ]
+
+    # Evaluate input [0, 0, 0, 0] (2 functions * 2 bits each)
+    result = sym_rep.evaluate(np.array(0), (expr, vars), space=Space.BOOLEAN_CUBE, n_vars=4)
+    assert result == 0
+
+    # Evaluate input [1, 1, 1, 1] → each AND([1, 1]) = 1, so 1 + 1 = 2
+    result = sym_rep.evaluate(np.array(15), (expr, vars), space=Space.BOOLEAN_CUBE, n_vars=4)
+    assert result == 2
+
+
+def test_symbolic_evaluate_batch(sym_rep):
+    """Test batch evaluation of symbolic expressions"""
+    expr = "x0"
+    vars = [DummyBooleanFunction(TruthTableRepresentation(), AND_TRUTH_TABLE, Space.BOOLEAN_CUBE, 2)]
+
+    inputs = np.array([0, 1, 2, 3])
+    expected = np.array([0, 0, 0, 1])
+    result = sym_rep.evaluate(inputs, (expr, vars), space=Space.BOOLEAN_CUBE, n_vars=2)
+    assert np.array_equal(result, expected)
+
+
+def test_symbolic_create_empty(sym_rep):
+    """Test empty symbolic creation"""
+    empty_expr, var_list = sym_rep.create_empty(3)
+    assert empty_expr == ""
+    assert var_list == ["x0", "x1", "x2"]
+
+def test_symbolic_dump(sym_rep):
+    """Test dumping symbolic data"""
+    expr = "x0 and x1"
+    vars = ["x0", "x1"]
+    dumped = sym_rep.dump((expr, vars))
+    assert dumped["expression"] == "x0 and x1"
+    assert dumped["variables"] == ["x0", "x1"]
+
+
+## Conversion Tests ##
 def test_truth_table_to_fourier_conversion(tt_rep, fourier_rep):
     """Test conversion from truth table to Fourier coefficients"""
     # Convert AND truth table to Fourier coefficients
@@ -142,5 +220,8 @@ def test_fourier_to_truth_table_conversion(tt_rep, fourier_rep):
     assert truth_table.shape == (4,)
     assert np.array_equal(truth_table, AND_TRUTH_TABLE)
 
+
+
 ## Edge Case Tests ##
+
 

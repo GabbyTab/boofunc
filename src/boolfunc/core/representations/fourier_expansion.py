@@ -8,7 +8,7 @@ from ..spaces import Space
 class FourierExpansionRepresentation(BooleanFunctionRepresentation[np.ndarray]):
     """Fourier expansion representation of Boolean functions"""
     
-    def evaluate(self, inputs: np.ndarray, data: Any, space: Space, n_vars: int, **kwargs) -> Union[bool, np.ndarray]:
+    def evaluate(self, inputs: np.ndarray, data: np.ndarray, space: Space, n_vars: int) -> np.ndarray:
         """
         Evaluate the Fourier expansion at given inputs.
         
@@ -23,10 +23,10 @@ class FourierExpansionRepresentation(BooleanFunctionRepresentation[np.ndarray]):
         # Convert to ±1 domain
 
         if not isinstance(inputs, np.ndarray):
-            return self._evaluate_single(inputs, data, n_vars)
-        return self._evaluate_batch(inputs, data, n_vars)
+            return self._evaluate_single(inputs, data)
+        return self._evaluate_batch(inputs, data)
     
-    def _evaluate_single(self, x: int, coeffs: np.ndarray, n_vars: int) -> float:
+    def _evaluate_single(self, x: int, coeffs: np.ndarray) -> float:
         """Evaluate f(x) given x as an integer bitstring, and coeffs of Fourier expansion over {0,1}^n"""
         result = 0.0
         for j in range(len(coeffs)):
@@ -36,11 +36,11 @@ class FourierExpansionRepresentation(BooleanFunctionRepresentation[np.ndarray]):
         return result
 
     
-    def _evaluate_batch(self, X: np.ndarray, coeffs: np.ndarray, n_vars: int) -> np.ndarray:
+    def _evaluate_batch(self, X: np.ndarray, coeffs: np.ndarray) -> np.ndarray:
         """Evaluate a batch of inputs X, where each x is an integer bitstring"""
         results = np.zeros(len(X))
         for idx, x in enumerate(X):
-            results[idx] = self._evaluate_single(x, coeffs, n_vars)
+            results[idx] = self._evaluate_single(x, coeffs)
         return results
 
 
@@ -64,12 +64,12 @@ class FourierExpansionRepresentation(BooleanFunctionRepresentation[np.ndarray]):
         size = 1 << n_vars  # 2^n
         coeffs = []
 
-        # Generate all input vectors x (as bits) and their integer indices
+        # Generate all input vectors x (as bits) and their integer indicesc
         x_bits = np.array([list(map(int, np.binary_repr(i, n_vars))) for i in range(size)])
         x_indices = np.arange(size, dtype=int)
 
         # Evaluate function f on all inputs
-        f_vals = source_repr.evaluate(x_indices, source_data, None, n_vars, **kwargs)
+        f_vals = source_repr.evaluate(x_indices, source_data, space, n_vars)
         f_vals = np.asarray(f_vals, dtype=float)
         
         # Optionally map {0,1} to {1,-1} for Boolean-to-sign function conversion
@@ -88,11 +88,10 @@ class FourierExpansionRepresentation(BooleanFunctionRepresentation[np.ndarray]):
 
         return np.array(coeffs)
 
-    def convert_to(self, target_repr: BooleanFunctionRepresentation, target_data: Any, space: Space, n_vars: int, **kwargs) -> np.ndarray:
+    def convert_to(self, target_repr: BooleanFunctionRepresentation, souce_data: Any, space: Space, n_vars: int, **kwargs) -> np.ndarray:
         """Convert to another representation from Fourier expansion"""
         # Placeholder: Actual conversion requires inverse transform
-        n_vars = int(np.log2(len(data)))
-        return target_repr.convert_from(self, data, n_vars=n_vars, **kwargs)
+        return target_repr.convert_from(self, souce_data, space, n_vars, **kwargs)
 
     def create_empty(self, n_vars: int, **kwargs) -> np.ndarray:
         """Create zero-initialized Fourier coefficients array"""

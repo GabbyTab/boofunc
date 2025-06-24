@@ -10,7 +10,7 @@ class BooleanFunctionRepresentation(ABC, Generic[DataType]):
     """Abstract base class for all Boolean function representations"""
     
     @abstractmethod
-    def evaluate(self, inputs: np.ndarray, data: Any, space: Space, n_vars: int, **kwargs) -> Union[bool, np.ndarray]:
+    def evaluate(self, inputs: np.ndarray, data: Any, space: Space, n_vars: int) -> np.ndarray:
         """
         Evaluate the function on given inputs using the provided data.
         
@@ -54,7 +54,7 @@ class BooleanFunctionRepresentation(ABC, Generic[DataType]):
         pass
 
     @abstractmethod
-    def convert_to(self, target_repr: "BooleanFunctionRepresentation", target_data: Any, space: Space, n_vars: int, **kwargs) -> np.ndarray:
+    def convert_to(self, target_repr: "BooleanFunctionRepresentation", souce_data: Any, space: Space, n_vars: int, **kwargs) -> np.ndarray:
         """
         Convert from this representation to target representation.
         

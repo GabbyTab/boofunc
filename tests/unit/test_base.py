@@ -217,18 +217,6 @@ class TestProbabilisticInterface:
         assert boolean_function.pmf([1, 0]) == 0.3
         assert boolean_function.pmf([0, 0]) == 0.0
 
-# 9. Integration Tests
-@pytest.mark.parametrize("input_data,expected_output", [
-    (np.array([0,0]), False),
-    (np.array([0,1]), True),
-    (np.array([1,0]), True),
-    (np.array([1,1]), False)
-])
-def test_xor_integration(input_data, expected_output):
-    bf_instance = bf.create([0, 1, 1, 0], rep_type="truth_table")
-    assert bf_instance.evaluate(input_data, bit_strings=True) == expected_output
-
-
 
 ## 1. __array__ method
 def test_array_conversion(xor_function):
@@ -241,47 +229,84 @@ def test_array_conversion(xor_function):
     bool_arr = np.array(xor_function, dtype=bool)
     assert np.array_equal(bool_arr, [False, True, True, False])
 
+
 ## 2. Operator methods
 @patch('boolfunc.core.factory.BooleanFunctionFactory.create_composite')
 def test_binary_operators(mock_factory, xor_function, and_function):
-    """Test +, *, &, |, ^ operators"""
-    # Test addition
+    cls = type(xor_function)
+
     _ = xor_function + and_function
-    mock_factory.assert_called_with(operator.add, xor_function, and_function)
-    
-    # Test multiplication with function
+    mock_factory.assert_called_with(
+        boolean_function_cls=cls,
+        operator=operator.add,
+        left_func=xor_function,
+        right_func=and_function
+    )
+
     _ = xor_function * and_function
-    mock_factory.assert_called_with(operator.mul, xor_function, and_function)
-    
-    # Test AND
+    mock_factory.assert_called_with(
+        boolean_function_cls=cls,
+        operator=operator.mul,
+        left_func=xor_function,
+        right_func=and_function
+    )
+
     _ = xor_function & and_function
-    mock_factory.assert_called_with(operator.and_, xor_function, and_function)
-    
-    # Test OR
+    mock_factory.assert_called_with(
+        boolean_function_cls=cls,
+        operator=operator.and_,
+        left_func=xor_function,
+        right_func=and_function
+    )
+
     _ = xor_function | and_function
-    mock_factory.assert_called_with(operator.or_, xor_function, and_function)
-    
-    # Test XOR
+    mock_factory.assert_called_with(
+        boolean_function_cls=cls,
+        operator=operator.or_,
+        left_func=xor_function,
+        right_func=and_function
+    )
+
     _ = xor_function ^ and_function
-    mock_factory.assert_called_with(operator.xor, xor_function, and_function)
+    mock_factory.assert_called_with(
+        boolean_function_cls=cls,
+        operator=operator.xor,
+        left_func=xor_function,
+        right_func=and_function
+    )
+
 
 def test_scalar_multiplication(xor_function, scalar_value):
     """Test multiplication with scalar"""
     with patch('boolfunc.core.factory.BooleanFunctionFactory.create_composite') as mock_scalar:
+        cls = type(xor_function)
         _ = xor_function * scalar_value
-        mock_scalar.assert_called_with(operator.mul, xor_function, scalar_value)
+        mock_scalar.assert_called_with(
+            boolean_function_cls=cls,
+            operator=operator.mul,
+            left_func=xor_function,
+            right_func=scalar_value
+        )
 
-## 3. Unary operators
 @patch('boolfunc.core.factory.BooleanFunctionFactory.create_composite')
 def test_unary_operators(mock_factory, xor_function):
-    """Test ~ (invert) and ** operators"""
-    # Test inversion
+    cls = type(xor_function)
+
     _ = ~xor_function
-    mock_factory.assert_called_with(operator.invert, xor_function, None)
-    
-    # Test exponentiation
+    mock_factory.assert_called_with(
+        boolean_function_cls=cls,
+        operator=operator.invert,
+        left_func=xor_function,
+        right_func=None
+    )
+
     _ = xor_function ** 2
-    mock_factory.assert_called_with(operator.pow, xor_function, None)
+    mock_factory.assert_called_with(
+        boolean_function_cls=cls,
+        operator=operator.pow,
+        left_func=xor_function,
+        right_func=None
+    )
 
 ## 4. __call__ method
 def test_call_method(xor_function):

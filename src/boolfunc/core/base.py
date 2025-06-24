@@ -61,8 +61,10 @@ class BooleanFunction(Evaluable, Representable):
         self.error_model = error_model or ExactErrorModel()
         self.tracking = kwargs.get('tracking')
         self.restrictions = kwargs.get('restrictions')
-        self.n_vars = kwargs.get('n')
+        self.n_vars = kwargs.get('n') or kwargs.get('n_vars')
         self._metadata = kwargs.get('metadata', {})
+        self.nickname = kwargs.get('nickname') or "x_0"
+
 
 
     def __array__(self, dtype=None) -> np.ndarray:
@@ -71,26 +73,66 @@ class BooleanFunction(Evaluable, Representable):
         return np.asarray(truth_table, dtype=dtype)
 
     def __add__(self, other):
-        return BooleanFunctionFactory.create_composite(operator.add, self, other)
+        return BooleanFunctionFactory.create_composite(
+            boolean_function_cls=type(self),  # or BooleanFunction if that's the base class
+            operator="+",
+            left_func=self,
+            right_func=other
+        )
+   
+    def __sub__(self, other):
+        return BooleanFunctionFactory.create_composite(
+            boolean_function_cls=type(self),  # or BooleanFunction if that's the base class
+            operator="-",
+            left_func=self,
+            right_func=other
+        )
+
 
     def __mul__(self, other):
-        return BooleanFunctionFactory.create_composite(operator.mul, self, other)
+        return BooleanFunctionFactory.create_composite(
+            boolean_function_cls=type(self),  # or BooleanFunction if that's the base class
+            operator="*",
+            left_func=self,
+            right_func=other
+        )
+
 
     def __and__(self, other):
-        return BooleanFunctionFactory.create_composite(operator.and_, self, other)
-
+        return BooleanFunctionFactory.create_composite(
+            boolean_function_cls=type(self),  # or BooleanFunction if that's the base class
+            operator="&",
+            left_func=self,
+            right_func=other
+        )
     def __or__(self, other):
-        return BooleanFunctionFactory.create_composite(operator.or_, self, other)
-
+        return BooleanFunctionFactory.create_composite(
+            boolean_function_cls=type(self),  # or BooleanFunction if that's the base class
+            operator="|",
+            left_func=self,
+            right_func=other
+        )
     def __xor__(self, other):
-        return BooleanFunctionFactory.create_composite(operator.xor, self, other)
-
+        return BooleanFunctionFactory.create_composite(
+            boolean_function_cls=type(self),  # or BooleanFunction if that's the base class
+            operator="^",
+            left_func=self,
+            right_func=other
+        )
     def __invert__(self):
-        return BooleanFunctionFactory.create_composite(operator.invert, self, None) # how is called imp
-
+        return BooleanFunctionFactory.create_composite(
+            boolean_function_cls=type(self),  # or BooleanFunction if that's the base class
+            operator= "~",
+            left_func=self,
+            right_func=None
+        )
     def __pow__(self, exponent):
-        return BooleanFunctionFactory.create_composite(operator.pow, self, None) 
-
+        return BooleanFunctionFactory.create_composite(
+            boolean_function_cls=type(self),  # or BooleanFunction if that's the base class
+            operator="**",
+            left_func=self,
+            right_func=None
+        )
     def __call__(self, inputs):
         return self.evaluate(inputs)
 
@@ -117,20 +159,29 @@ class BooleanFunction(Evaluable, Representable):
     def _compute_representation(self, rep_type: str):
         # Implement conversion logic here - Compute from nearest representation or run Dijkstra's 
         # if no representations, the function should error
-        if rep_type == None:
-            rep_type = next(iter(self.representations))
-       
-        data = self.representations[rep_type] 
-        strategy = get_strategy(rep_type)
-        result = strategy.convert_to(rep_type, data)
-        return result
+        if rep_type in self.representations:
+            return None
+
+        source_rep_type = next(iter(self.representations))
+
+        if source_rep_type is None:
+            raise KeyError("Boolean Function is Empty (no representations)")
+        
+        data = self.representations[source_rep_type] 
+        source_strategy = get_strategy(source_rep_type)
+        target_strategy = get_strategy(rep_type)
+
+        result = source_strategy.convert_to(target_strategy, data, self.space, self.n_vars)
+
+        self.add_representation(result, rep_type)
+        return None
       
     def get_representation(self, rep_type: str):
         """Retrieve or compute representation"""
-        if self.representations[rep_type] is None:
-            self.representations[rep_type] = self._compute_representation(rep_type)
-        return self.representations[rep_type]
+        self._compute_representation(rep_type)
+        rep_data = self.representations[rep_type]
 
+        return rep_data
 
     def add_representation(self, data, rep_type = None):
         """Add a representation to this boolean function"""
@@ -182,7 +233,7 @@ class BooleanFunction(Evaluable, Representable):
        
         data = self.representations[rep_type]     
         strategy = get_strategy(rep_type)
-        result = strategy.evaluate(inputs, data)
+        result = strategy.evaluate(inputs, data, self.space, self.n_vars)
         return result
 
         
@@ -222,4 +273,15 @@ class BooleanFunction(Evaluable, Representable):
         pass
         """Cumulative distribution function"""
         #return self._compute_cdf(x)
+
+
+    #get methods
+    def get_n_vars(self):
+        return self.n_vars
+
+    #get methods
+    def has_rep(self, rep_type):
+        if rep_type in self.representations:
+            return True
+        return False
 

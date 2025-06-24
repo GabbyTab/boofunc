@@ -20,7 +20,7 @@ class BooleanFunctionFactory:
             if np.issubdtype(data.dtype, np.integer):
                 return 'polynomial'
             if np.issubdtype(data.dtype, np.floating):
-                return 'multilinear'
+                return 'fourier_expansion'
             return 'polynomial'
         if isinstance(data, list):
             return cls._determine_rep_type(np.array(data))
@@ -60,7 +60,7 @@ class BooleanFunctionFactory:
             return cls.from_input_invariant_truth_table(boolean_function_cls, data, **kwargs)
         elif rep_type == 'polynomial':
             return cls.from_polynomial(boolean_function_cls, data, **kwargs)
-        elif rep_type == 'multilinear':
+        elif rep_type == 'fourier_expansion' or rep_type == 'fourier':
             return cls.from_multilinear(boolean_function_cls, data, **kwargs)
         elif rep_type == 'symbolic':
             return cls.from_symbolic(boolean_function_cls, data, **kwargs)
@@ -108,8 +108,13 @@ class BooleanFunctionFactory:
         return instance
 
     @classmethod
-    def from_multilinear(cls, boolean_function_cls, coeffs, rep_type='multilinear', **kwargs):
+    def from_multilinear(cls, boolean_function_cls, coeffs, rep_type='fourier_expansion', **kwargs):
         """Create from multilinear polynomial coefficients"""
+        n_vars = kwargs.get('n')
+        if n_vars is None:
+            n_vars = int(np.log2(len(coeffs)))
+            kwargs['n'] = n_vars
+
         instance = boolean_function_cls(**kwargs)
         instance.add_representation(coeffs, rep_type)
         return instance
@@ -153,21 +158,31 @@ class BooleanFunctionFactory:
         """Create composite function from two BooleanFunctions or numerical values"""
         
         # Handle numerical types for left function
+        kwargs["n_vars"]  = 0
+
+        variables = []
         if isinstance(left_func, numbers.Number):
             left_sym = str(left_func)
         else:
-            left_sym = left_func.get_representation('symbolic')
+            left_sym = "x0"
+            variables.append(left_func)
+            kwargs["n_vars"] += left_func.get_n_vars() 
+            
         
         # Handle numerical types for right function
         if isinstance(right_func, numbers.Number):
             right_sym = str(right_func)
         else:
-            right_sym = right_func.get_representation('symbolic')
+            right_sym = f"x{len(variables)}"
+            variables.append(right_func)
+            kwargs["n_vars"] += right_func.get_n_vars() 
         
         # Create symbolic expression
-        expression = f"({left_sym} {operator.__name__} {right_sym})"
+        expression = f"({left_sym} {operator} {right_sym})"
+
+      
         
         # Create and return composite instance
         instance = boolean_function_cls(**kwargs)
-        instance.add_representation(expression, rep_type)
+        instance.add_representation((expression, variables), rep_type)
         return instance
